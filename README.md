@@ -13,6 +13,8 @@ TODO: make notes for chapter 1 and 2.
 
 Roughly we will plan to discuss primary content (i.e. readings from the book) on Tuesdays, and on Thurdays we can meet to discuss auxillary content such as alternate approaches to the material, more advanced material, etc. Later in the summer we plan to start a coding project, likely making a proof assistant.
 
+Meeting times are yet to be determined.
+
 | Meeting Dates | Readings Due  |
 | ------------- |---------------|
 | Tuesday, May 28      |  |
