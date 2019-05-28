@@ -7,7 +7,7 @@ Tentatively we are using this book: [https://www.amazon.com/Type-Theory-Formal-P
 
 ### Notes
 
-TODO: make notes for chapter 1 and 2.
+1. [Chapter 1 notes](https://github.com/donald-pinckney/type-theory-seminar/raw/master/notes/ch1/notes.pdf)
 
 ## **TENTATIVE** Schedule
 
@@ -18,7 +18,7 @@ Meeting times are yet to be determined.
 | Meeting Dates | Readings Due  |
 | ------------- |---------------|
 | Tuesday, May 28      |  |
-| Thursday, May 30      | Chapter 1 or Chapter 1 notes      |
+| Thursday, May 30      | Chapter 1 or [Chapter 1 notes](https://github.com/donald-pinckney/type-theory-seminar/raw/master/notes/ch1/notes.pdf)      |
 | Tuesday, June 4      | Chapter 2 or Chapter 2 notes      |
 | Thursday, June 6      |       |
 | Tuesday, June 11      | Chapter 3      |
