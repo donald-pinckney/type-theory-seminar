@@ -1,0 +1,375 @@
+\documentclass[letterpaper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage[shortlabels]{enumitem}
+\usepackage{amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz-cd}
+\usepackage{mathabx}
+\usepackage{dsfont}
+\usepackage{relsize}
+\usepackage{xifthen}
+\usepackage{extarrows}
+\usepackage{pifont}
+\usepackage{mathtools}
+\usepackage{xspace}
+\usepackage{bussproofs}
+\usepackage{flagderiv}
+
+\renewcommand{\introsymb}{\!}
+
+\newenvironment{theorem}[2][]{\par\medskip
+	\noindent \textbf{Theorem~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{lemma}[2][]{\par\medskip
+	\noindent \textbf{Lemma~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{corollary}[2][]{\par\medskip
+	\noindent \textbf{Corollary~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{remark}[2][]{\par\medskip
+	\noindent \textbf{Remark~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{remarkNonNum}[1][]{\par\medskip
+	\noindent \textbf{Remark}~~~#1 \rmfamily\em}{\medskip}
+	
+\newenvironment{notation}[2][]{\par\medskip
+	\noindent \textbf{Notation~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{convention}[2][]{\par\medskip
+	\noindent \textbf{Convention~#2}~~~#1 \rmfamily\em}{\medskip}
+	
+\newenvironment{examplesNonNum}[1][]{\par\medskip
+	\noindent \textbf{Examples}~~~#1 \rmfamily}{\medskip}
+
+\newenvironment{definition}[2][]{\par\medskip
+	\noindent \textbf{Definition~#2}~~~#1 \rmfamily}{\medskip}
+
+\usetikzlibrary{decorations.markings,positioning}
+
+\newcommand{\iso}{\cong}
+
+\newcommand{\Z}{\mathbb{Z}}
+\renewcommand{\S}{\GenericError{}}
+
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+
+\renewcommand{\l}{\lambda}
+\newcommand{\aeq}{=_\alpha}
+\newcommand{\beq}{=_\beta}
+\newcommand{\nbeq}{\neq_\beta}
+\newcommand{\naeq}{\neq_\alpha}
+\newcommand{\bnf}{$\beta$-nf\xspace}
+
+\newcommand{\betaro}{\rightarrow_\beta}
+\newcommand{\betar}{\twoheadrightarrow_\beta}
+
+\newcommand{\larr}{\lambda \!\! \rightarrow}
+
+
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+    \node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
+
+\DeclareMathOperator{\Ima}{Im}
+\DeclareMathOperator{\dom}{dom}
+\DeclareMathOperator{\Hom}{Hom}
+\DeclareMathOperator{\Sub}{Sub}
+\DeclareMathOperator{\pr}{pr}
+\DeclareMathOperator{\fact}{fact}
+\DeclareMathOperator{\ifT}{if}
+\DeclareMathOperator{\iszero}{iszero}
+\DeclareMathOperator{\then}{then}
+\DeclareMathOperator{\elseT}{else}
+\DeclareMathOperator{\mult}{mult}
+\DeclareMathOperator{\pred}{pred}
+
+\newcommand{\proj}{\upharpoonright}
+
+\newcommand{\T}{\mathbb{T}}
+\newcommand{\V}{\mathbb{V}}
+
+\newcommand{\arr}[1][]{%
+	\ifthenelse{\isempty{#1}}{\longrightarrow}{\xlongrightarrow{#1}}%
+}
+
+\newcommand{\hookarr}[1][]{%
+	\ifthenelse{\isempty{#1}}{\longhookrightarrow}{\lhook\joinrel\xrightarrow{#1}}%
+}
+
+
+\author{Notes by Donald Pinckney}
+\title{Notes from: Type Theory and Formal Proof, Chapter 2: Simply Typed Lambda Calculus, $\larr$}
+
+\begin{document}
+\maketitle
+
+Untyped lambda calculus offers a concise and elegant formal system for expressing the behavior of functions. However, it is a bit ``too liberal'' with what it allows as terms, giving rise to some rather non-intuitive constructions. The goal is now to add types so as to prevent these strange constructions. In this chapter we add \emph{simple types} which will actually be a bit too restrictive, and then in later chapters we will add more sophisticated types.
+
+\section{Simple Types}
+
+We define the set of \emph{simple types} $\T$ by a grammar. Let $\V = \{\alpha, \beta, \gamma, \cdots \}$ be an infinite set of \emph{type variables}. Note that from here on \emph{variable} refers to ordinary variables $x, y, z, \cdots$. while \emph{type variable} refers to $\V$.
+
+\begin{definition}[(Set $\T$ of simple types)]{2.2.1}
+	\begin{enumerate}
+		\item (Type variable) If $\alpha \in \V$ then $\alpha \in \T$.
+		\item (Arrow type) If $\sigma, \tau \in \T$, then $(\sigma \to \tau) \in \T$.
+	\end{enumerate}
+As an abstract syntax, $\T = \V \mid \T \to \T$.
+\end{definition}
+
+\begin{notation}{2.2.2}
+	\begin{enumerate}
+		\item We use $\alpha, \beta, \cdots$ for type variables.
+		\item We use $\sigma, \tau, \cdots$ (occasionally $A, B, \cdots$) for arbitrary simple types.
+		\item Arrow types are right associative.
+	\end{enumerate}
+\end{notation}
+
+Examples include $\gamma, \beta \to \gamma, (\gamma \to \alpha) \to \alpha \to \beta \to \gamma$, etc. The intended intuitive meaning of simple types is that type variables are abstract representations of basic types such as nat, bool, etc. Arrow types represent function types.
+
+\section{Derivation Rules}
+
+We now want to decorate our $\l$-terms with types. We revise the syntax of $\l$-terms by indicating explicitly the types of binding variables:
+\begin{definition}[(Pre-typed $\l$-terms, $\Lambda_\T$)]{2.4.1}
+	\[
+		\Lambda_\T = V \mid (\Lambda_\T \Lambda_\T) \mid (\l V : \T . \Lambda_\T)
+	\]
+\end{definition}
+
+To express things like ``$\l$-term $M$ has type $\sigma$'' in a context $\Gamma$, we define a \emph{judgment}:
+
+\begin{definition}[(Statement, declaration, context, judgment)]{2.4.2}
+	\begin{enumerate}
+		\item A \emph{statement} is of the form $M : \sigma$, where $M \in \Lambda_\T$ and $\sigma \in \T$. In such a statement $M$ is called the \emph{subject} and $\sigma$ is called the \emph{type}.
+		\item A \emph{declaration} is a statement with subject being some \emph{variable}.
+		\item A \emph{context} is a list of declarations with \emph{different subjects each}.
+		\item A \emph{judgment} has the form $\Gamma \vdash M : \sigma$, with $\Gamma$ a context and $M : \sigma$ a statement. We say that such a judgment is \emph{derivable} if $M$ has type $\sigma$ in context $\Gamma$.
+	\end{enumerate}
+\end{definition}
+
+Note that we consider the variables declared in a context to be binding variables. Next we have the derivation rules for $\larr$:
+
+\begin{definition}[(Derivation rules for $\larr$)]{2.4.5}
+	\begin{enumerate}
+		\item (var) $\Gamma \vdash x : \sigma$ if $x : \sigma \in \Gamma$
+		\item (appl) \AxiomC{$\Gamma \vdash M : \sigma \to \tau$}\AxiomC{$\Gamma \vdash N : \sigma$}\BinaryInfC{$\Gamma \vdash M N : \tau$}\DisplayProof
+		\item (abst) \AxiomC{$\Gamma, x : \sigma \vdash M : \tau$}\UnaryInfC{$\Gamma \vdash \l x : \sigma . M : \sigma \to \tau$}\DisplayProof
+	\end{enumerate}
+\end{definition}
+
+\begin{remarkNonNum}
+	There is a correspondence between (appl) and (abst) rules defined above and implication elimination (modus ponens) and introduction in logic. See book, page 43 for more details.
+\end{remarkNonNum}
+
+\begin{definition}[(Legal $\larr$ terms)]{2.4.10}
+	A pre-typed term $M$ in $\larr$ is \emph{legal} if there exist context $\Gamma$ and type $\rho$ such that $\Gamma \vdash M : \rho$.
+\end{definition}
+
+\begin{examplesNonNum}
+	The term $x x$ is not legal. In order for $x x$ to have a type, it must be through the application rule, so it must be that $x : \sigma \to \tau$ for some $\sigma$ and $\tau$ (via the left $x$). However, in order to use the application rule we must also have that $x : \sigma$ (via the right $x$). Therefore, in order to have $\Gamma \vdash x x : \rho$ we must have that $x : \sigma \in \Gamma$ and $x : \sigma \to \tau \in \Gamma$. But this violates the definition of a context.
+\end{examplesNonNum}
+
+\section{Flag Format of Proofs}
+
+A standard way of writing proofs inside a derivation system such as Definition 2.4.5 is in a tree-style. However, this quickly becomes unwieldy with larger proofs. Instead, we use the \emph{flag format} of derivations. One displays each \emph{declaration} (i.e. element of the context) in a ``flag'', with the ``flag pole'' indicating for what portion of the proof the declaration is in the context. In some situations we also omit uses of the (var) rule from the written proof, though they are still part of the proof.
+
+\begin{examplesNonNum}
+	Consider the following tree-style proof:
+\begin{prooftree}
+	\AxiomC{$y : \alpha \to \beta, z : \alpha \vdash y : \alpha \to \beta$}
+	\AxiomC{$y : \alpha \to \beta, z : \alpha \vdash z : \alpha$}
+	\BinaryInfC{$y : \alpha \to \beta, z : \alpha \vdash yz : \beta$}
+	\UnaryInfC{$y : \alpha \to \beta \vdash \l z : \alpha . y z : \alpha \to \beta$}
+	\UnaryInfC{$\emptyset \vdash \l y : \alpha \to \beta . \l z : \alpha . y z : (\alpha \to \beta) \to \alpha \to \beta$}
+\end{prooftree}
+
+If we rewrite this proof in flag-style and including uses of (var) rule, we get:
+
+\begin{flagderiv}
+	\introduce*{$(a)$}{y : \alpha \to \beta}{}
+		\introduce*{$(b)$}{z : \alpha}{}
+			\step*{$(1)$}{y : \alpha \to \beta}{(var) on $(a)$}
+			\step*{$(2)$}{z : \alpha}{(var) on $(b)$}
+			\step*{$(3)$}{yz: \beta}{(appl) on $(1)$ and $(2)$}
+		\conclude*{$(4)$}{\l z : \alpha . y z : \alpha \to \beta}{(abst) on $(3)$}
+	\conclude*{$(5)$}{\l y : \alpha \to \beta . \l z : \alpha . y z : (\alpha \to \beta) \to \alpha \to \beta}{(abst) on $(4)$}
+\end{flagderiv}
+
+If we choose to exclude uses of (var) we would write:
+
+\begin{flagderiv}
+	\introduce*{$(a)$}{y : \alpha \to \beta}{}
+	\introduce*{$(b)$}{z : \alpha}{}
+	\step*{$(1')$}{yz: \beta}{(appl) on $(a)$ and $(b)$}
+	\conclude*{$(2')$}{\l z : \alpha . y z : \alpha \to \beta}{(abst) on $(1')$}
+	\conclude*{$(3')$}{\l y : \alpha \to \beta . \l z : \alpha . y z : (\alpha \to \beta) \to \alpha \to \beta}{(abst) on $(2')$}
+\end{flagderiv}
+
+\end{examplesNonNum}
+
+\section{Kinds of problems in type theory}
+
+In general there are 3 kinds of problems to be solved in type theory:
+
+\begin{enumerate}
+	\item \emph{Well-typedness / typeability}.
+	
+	In this problem, we are given a term $M$ and wish to find an appropriate context and type:
+	\[
+		? \vdash M : \; ?
+	\]
+	In other words, show that $M$ is legal. If the term is not legal, then explain where it goes wrong. A variant of this is \emph{type assignment} where a context $\Gamma$ is given, and want to find an appropriate type: $\Gamma \vdash M : \; ?$.
+
+	\item \emph{Type Checking}.
+	
+	Here, the context $\Gamma$, term $M$, and type $\sigma$ are all given to us, but we want to check (verify) if $\Gamma \overset{?}{\vdash} M : \sigma$.
+
+	\item \emph{Term Finding / Term Construction / Inhabitation}.
+	
+	In this situation a context $\Gamma$ and type $\sigma$ are given, and we want to determine if there exists a term of that type, given the context: $\Gamma \vdash \; ? : \sigma$. A common specific case is for $\Gamma = \emptyset$.
+\end{enumerate}
+I recommend looking at sections 2.7, 2.8 and 2.9 in the textbook for guided examples of all 3 of these problems.
+
+\section{General properties of $\larr$}
+
+\begin{definition}{2.10.1}
+	\begin{enumerate}
+		\item If $\Gamma = x_1 : \sigma_1, \cdots x_n : \sigma_n$ then the \emph{domain} of $\Gamma$ or $\dom(\Gamma)$ is the list $(x_1, \cdots, x_n)$.
+		\item A context $\Gamma'$ is a \emph{subcontext} of context $\Gamma$ ($\Gamma' \subseteq \Gamma$) if all the declarations occurring in $\Gamma'$ also occur in $\Gamma$, \emph{in the same order}.
+		\item A context $\Gamma'$ is a \emph{permutation} of $\Gamma$ if they have exactly the same declarations, but possibly in a different order.
+		\item If $\Gamma$ is a context and $\Phi$ is a set of variables, then the \emph{projection} of $\Gamma$ on $\Phi$, or $\Gamma \proj \Phi$, is the subcontext $\Gamma' \subseteq \Gamma$ with $\dom(\Gamma') = \dom(\Gamma) \cap \Phi$. 
+	\end{enumerate}
+\end{definition}
+
+
+\begin{lemma}[(Free Variables Lemma)]{2.10.3}
+	If $\Gamma \vdash L : \sigma$, then $FV(L) \subseteq \dom(\Gamma)$.
+\end{lemma}
+
+A consequence of this lemma is that every variable occurrence always has an unambiguous type. If a variable occurrence is free in $L$, then the above lemma says that the variable's type must be recorded in the context. On the other hand, if a variable occurrence is a bound occurrence, then its binding variable has the type recorded.
+
+\begin{proof}
+	By structural induction on possible derivations of $\Gamma \vdash L : \sigma$, see textbook for proof on page 55.
+\end{proof}
+
+\begin{lemma}[(Thinning, Condensing, Permutation)]{2.10.5}
+	\begin{enumerate}
+		\item (Thinning) Let $\Gamma' \subseteq \Gamma''$. If $\Gamma' \vdash M : \sigma$, then also $\Gamma'' \vdash M : \sigma$.
+		\item (Condensing) If $\Gamma \vdash M : \sigma$, then also $\Gamma \proj FV(M) \vdash M : \sigma$.
+		\item (Permutation) If $\Gamma \vdash M : \sigma$ and $\Gamma'$ is a permutation of $\Gamma$, then $\Gamma'$ is also a context and $\Gamma' \vdash M : \sigma$.
+	\end{enumerate}
+\end{lemma}
+
+Results 1 and 2 informally mean that one can add or remove variables that are not free in $M$ from the context, and the same judgment will still hold. Result 3 is fine in $\larr$ since there is no dependence between declarations in the context, but this will change in later systems.
+
+\begin{proof}
+	More proofs by structural induction, see book on page 57.
+\end{proof}
+
+\begin{lemma}[(Generation Lemma)]{2.10.7}
+	\begin{enumerate}
+		\item If $\Gamma \vdash x : \sigma$, then $x : \sigma \in \Gamma$.
+		\item If $\Gamma \vdash M N : \tau$, then there is a type $\sigma$ such that $\Gamma \vdash M : \sigma \to \tau$ and $\Gamma \vdash N : \sigma$.
+		\item If $\Gamma \vdash \l x : \sigma . M : \rho$, then there is a type $\tau$ such that $\Gamma, x : \sigma \vdash M : \tau$ and $\rho \equiv \sigma \to \tau$.
+	\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+	Inspection of the derivation rules shows that these are the only possibilities.
+\end{proof}
+
+\begin{lemma}[(Subterm Lemma)]{2.10.8}
+	If $M$ is legal, then every subterm of $M$ is legal.
+\end{lemma}
+
+\begin{proof}
+	Exercise 2.16.
+\end{proof}
+
+\begin{lemma}[(Uniqueness of Types)]{2.10.9}
+	If $\Gamma \vdash M : \sigma$ and $\Gamma \vdash M : \tau$, then $\sigma \equiv \tau$.
+\end{lemma}
+
+\begin{proof}
+	Exercise 2.17.
+\end{proof}
+
+\begin{theorem}[(Decidability in $\larr$)]{2.10.10}
+	In $\larr$ the following problems are decidable:
+	\begin{enumerate}
+		\item Well-typedness: $? \vdash \textrm{\normalfont term} : \; ?$
+		\item Type Assignment: $\textrm{\normalfont context} \vdash \textrm{\normalfont term} : \; ?$
+		\item Type Checking: $\textrm{\normalfont context} \overset{?}{\vdash} \textrm{\normalfont term} : \; \textrm{\normalfont type}$
+		\item Term Finding: $\textrm{\normalfont context} \vdash \; ? : \; \textrm{\normalfont type}$
+	\end{enumerate}
+	See above for further descriptions of these problems.
+\end{theorem}
+
+For proof see Barendregt, 1992, Propositions 4.4.11 and 4.4.12.
+
+\section{Reduction and $\larr$}
+
+We now wish to understand the behavior of $\beta$-reduction in $\larr$. First we look at substitution. The definition of substitution remains nearly unchanged, we just have to propagate untouched the binding variable type in abstractions. Then we get this lemma:
+
+\begin{lemma}[(Substitution Lemma)]{2.11.1}
+	Assume $\Gamma', x : \sigma, \Gamma'' \vdash M : \tau$ and $\Gamma' \vdash N : \sigma$. Then $\Gamma', \Gamma'' \vdash M[x := N] : \tau$.
+\end{lemma}
+
+\begin{proof}
+	See book on page 60.
+\end{proof}
+
+Similarly to substitution, $\betaro$ remains virtually the same as in untyped $\l$-calculus. Then $\betar$ and $\beq$ are defined as before, based on $\betaro$. Note that types play no role in $\beta$-reduction, so clearly the Church-Rosser Theorem and Corollary 1.9.9 still hold.
+
+We now show that types are preserved by $\beta$-reduction:
+
+\begin{lemma}[(Subject Reduction)]{2.11.5}
+	If $\Gamma \vdash L : \rho$ and if $L \betar L'$, then $\Gamma \vdash L' : \rho$.
+\end{lemma}
+
+\begin{proof}
+	This essentially follows from the Substitution Lemma, see the book on page 62 for details.
+\end{proof}
+
+Finally, we can show that all reduction sequences in $\larr$ are finite:
+
+\begin{theorem}[(Strong Normalization Theorem)]{2.11.6}
+	Every legal $M$ is strongly normalizing.
+\end{theorem}
+
+See Geuvers \& Nederpelt , 1994 or Barendregt, 1992, Theorem 5.3.33 for proofs.
+
+
+\section{Consequences and Conclusion}
+
+In Sections 5 and 6 we showed some nice properties of $\larr$, and these properties indeed rule out the undesirable behavior of untyped $\l$-calculus:
+
+\begin{enumerate}
+	\item First, we show that there is no self-application in $\larr$. Suppose for contradiction that $MM$ is a legal term in $\larr$. Then there are $\Gamma$ and $\tau$ such that $\Gamma \vdash M M : \tau$. From the Generation Lemma we have that there is a type $\sigma$ such that (for the first $M$) $\Gamma \vdash M : \sigma \to \tau$ and (for the second $M$) $\Gamma \vdash M : \sigma$. By Lemma 2.10.9 this means that $\sigma \to \tau \equiv \sigma$ which is a contradiction.
+	
+	\item Existence of \bnf is guaranteed: this follows directly from Theorem 2.11.6.
+	
+	\item Not every legal $\larr$ term has a fixed point. Suppose $F$ is a legal function of type $\sigma \to \tau$ in some context, with $\sigma \neq \tau$. Then $FM$ must have type $\tau$ and $M$ must have type $\sigma$, so they can not be $\beq$.
+\end{enumerate}
+
+%In $\larr$ all 3 of the above problems are \emph{decidable}. However, in more advanced systems (in later chapters) Term Finding will not be decidable.
+
+
+%\section{Well-typedness in $\larr$} \label{welltype}
+
+%\section{Type Checking in $\larr$} \label{typecheck}
+
+%\section{Term Finding in $\larr$} \label{termfind}
+
+%We use these types by adding \emph{statements} (or \emph{typing statements}) of the form $M : \sigma$ to our formal language, to indicate that term $M$ has type $\sigma$. In addition, we assume that for each type $\sigma$ there is an infinitude of variables with type $\sigma$. In addition, each variable $x$ has a \emph{unique} type: if $x : \sigma$ and $x : \tau$ then $\sigma \equiv \tau$.
+
+
+
+
+
+\end{document}
