@@ -76,6 +76,7 @@
     \node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
 
 \DeclareMathOperator{\Ima}{Im}
+\DeclareMathOperator{\dom}{dom}
 \DeclareMathOperator{\Hom}{Hom}
 \DeclareMathOperator{\Sub}{Sub}
 \DeclareMathOperator{\pr}{pr}
@@ -86,6 +87,8 @@
 \DeclareMathOperator{\elseT}{else}
 \DeclareMathOperator{\mult}{mult}
 \DeclareMathOperator{\pred}{pred}
+
+\newcommand{\proj}{\upharpoonright}
 
 \newcommand{\T}{\mathbb{T}}
 \newcommand{\V}{\mathbb{V}}
@@ -233,6 +236,126 @@ In general there are 3 kinds of problems to be solved in type theory:
 I recommend looking at sections 2.7, 2.8 and 2.9 in the textbook for guided examples of all 3 of these problems.
 
 \section{General properties of $\larr$}
+
+\begin{definition}{2.10.1}
+	\begin{enumerate}
+		\item If $\Gamma = x_1 : \sigma_1, \cdots x_n : \sigma_n$ then the \emph{domain} of $\Gamma$ or $\dom(\Gamma)$ is the list $(x_1, \cdots, x_n)$.
+		\item A context $\Gamma'$ is a \emph{subcontext} of context $\Gamma$ ($\Gamma' \subseteq \Gamma$) if all the declarations occurring in $\Gamma'$ also occur in $\Gamma$, \emph{in the same order}.
+		\item A context $\Gamma'$ is a \emph{permutation} of $\Gamma$ if they have exactly the same declarations, but possibly in a different order.
+		\item If $\Gamma$ is a context and $\Phi$ is a set of variables, then the \emph{projection} of $\Gamma$ on $\Phi$, or $\Gamma \proj \Phi$, is the subcontext $\Gamma' \subseteq \Gamma$ with $\dom(\Gamma') = \dom(\Gamma) \cap \Phi$. 
+	\end{enumerate}
+\end{definition}
+
+
+\begin{lemma}[(Free Variables Lemma)]{2.10.3}
+	If $\Gamma \vdash L : \sigma$, then $FV(L) \subseteq \dom(\Gamma)$.
+\end{lemma}
+
+A consequence of this lemma is that every variable occurrence always has an unambiguous type. If a variable occurrence is free in $L$, then the above lemma says that the variable's type must be recorded in the context. On the other hand, if a variable occurrence is a bound occurrence, then its binding variable has the type recorded.
+
+\begin{proof}
+	By structural induction on possible derivations of $\Gamma \vdash L : \sigma$, see textbook for proof on page 55.
+\end{proof}
+
+\begin{lemma}[(Thinning, Condensing, Permutation)]{2.10.5}
+	\begin{enumerate}
+		\item (Thinning) Let $\Gamma' \subseteq \Gamma''$. If $\Gamma' \vdash M : \sigma$, then also $\Gamma'' \vdash M : \sigma$.
+		\item (Condensing) If $\Gamma \vdash M : \sigma$, then also $\Gamma \proj FV(M) \vdash M : \sigma$.
+		\item (Permutation) If $\Gamma \vdash M : \sigma$ and $\Gamma'$ is a permutation of $\Gamma$, then $\Gamma'$ is also a context and $\Gamma' \vdash M : \sigma$.
+	\end{enumerate}
+\end{lemma}
+
+Results 1 and 2 informally mean that one can add or remove variables that are not free in $M$ from the context, and the same judgment will still hold. Result 3 is fine in $\larr$ since there is no dependence between declarations in the context, but this will change in later systems.
+
+\begin{proof}
+	More proofs by structural induction, see book on page 57.
+\end{proof}
+
+\begin{lemma}[(Generation Lemma)]{2.10.7}
+	\begin{enumerate}
+		\item If $\Gamma \vdash x : \sigma$, then $x : \sigma \in \Gamma$.
+		\item If $\Gamma \vdash M N : \tau$, then there is a type $\sigma$ such that $\Gamma \vdash M : \sigma \to \tau$ and $\Gamma \vdash N : \sigma$.
+		\item If $\Gamma \vdash \l x : \sigma . M : \rho$, then there is a type $\tau$ such that $\Gamma, x : \sigma \vdash M : \tau$ and $\rho \equiv \sigma \to \tau$.
+	\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+	Inspection of the derivation rules shows that these are the only possibilities.
+\end{proof}
+
+\begin{lemma}[(Subterm Lemma)]{2.10.8}
+	If $M$ is legal, then every subterm of $M$ is legal.
+\end{lemma}
+
+\begin{proof}
+	Exercise 2.16.
+\end{proof}
+
+\begin{lemma}[(Uniqueness of Types)]{2.10.9}
+	If $\Gamma \vdash M : \sigma$ and $\Gamma \vdash M : \tau$, then $\sigma \equiv \tau$.
+\end{lemma}
+
+\begin{proof}
+	Exercise 2.17.
+\end{proof}
+
+\begin{theorem}[(Decidability in $\larr$)]{2.10.10}
+	In $\larr$ the following problems are decidable:
+	\begin{enumerate}
+		\item Well-typedness: $? \vdash \textrm{\normalfont term} : \; ?$
+		\item Type Assignment: $\textrm{\normalfont context} \vdash \textrm{\normalfont term} : \; ?$
+		\item Type Checking: $\textrm{\normalfont context} \overset{?}{\vdash} \textrm{\normalfont term} : \; \textrm{\normalfont type}$
+		\item Term Finding: $\textrm{\normalfont context} \vdash \; ? : \; \textrm{\normalfont type}$
+	\end{enumerate}
+	See above for further descriptions of these problems.
+\end{theorem}
+
+For proof see Barendregt, 1992, Propositions 4.4.11 and 4.4.12.
+
+\section{Reduction and $\larr$}
+
+We now wish to understand the behavior of $\beta$-reduction in $\larr$. First we look at substitution. The definition of substitution remains nearly unchanged, we just have to propagate untouched the binding variable type in abstractions. Then we get this lemma:
+
+\begin{lemma}[(Substitution Lemma)]{2.11.1}
+	Assume $\Gamma', x : \sigma, \Gamma'' \vdash M : \tau$ and $\Gamma' \vdash N : \sigma$. Then $\Gamma', \Gamma'' \vdash M[x := N] : \tau$.
+\end{lemma}
+
+\begin{proof}
+	See book on page 60.
+\end{proof}
+
+Similarly to substitution, $\betaro$ remains virtually the same as in untyped $\l$-calculus. Then $\betar$ and $\beq$ are defined as before, based on $\betaro$. Note that types play no role in $\beta$-reduction, so clearly the Church-Rosser Theorem and Corollary 1.9.9 still hold.
+
+We now show that types are preserved by $\beta$-reduction:
+
+\begin{lemma}[(Subject Reduction)]{2.11.5}
+	If $\Gamma \vdash L : \rho$ and if $L \betar L'$, then $\Gamma \vdash L' : \rho$.
+\end{lemma}
+
+\begin{proof}
+	This essentially follows from the Substitution Lemma, see the book on page 62 for details.
+\end{proof}
+
+Finally, we can show that all reduction sequences in $\larr$ are finite:
+
+\begin{theorem}[(Strong Normalization Theorem)]{2.11.6}
+	Every legal $M$ is strongly normalizing.
+\end{theorem}
+
+See Geuvers \& Nederpelt , 1994 or Barendregt, 1992, Theorem 5.3.33 for proofs.
+
+
+\section{Consequences and Conclusion}
+
+In Sections 5 and 6 we showed some nice properties of $\larr$, and these properties indeed rule out the undesirable behavior of untyped $\l$-calculus:
+
+\begin{enumerate}
+	\item First, we show that there is no self-application in $\larr$. Suppose for contradiction that $MM$ is a legal term in $\larr$. Then there are $\Gamma$ and $\tau$ such that $\Gamma \vdash M M : \tau$. From the Generation Lemma we have that there is a type $\sigma$ such that (for the first $M$) $\Gamma \vdash M : \sigma \to \tau$ and (for the second $M$) $\Gamma \vdash M : \sigma$. By Lemma 2.10.9 this means that $\sigma \to \tau \equiv \sigma$ which is a contradiction.
+	
+	\item Existence of \bnf is guaranteed: this follows directly from Theorem 2.11.6.
+	
+	\item Not every legal $\larr$ term has a fixed point. Suppose $F$ is a legal function of type $\sigma \to \tau$ in some context, with $\sigma \neq \tau$. Then $FM$ must have type $\tau$ and $M$ must have type $\sigma$, so they can not be $\beq$.
+\end{enumerate}
 
 %In $\larr$ all 3 of the above problems are \emph{decidable}. However, in more advanced systems (in later chapters) Term Finding will not be decidable.
 
