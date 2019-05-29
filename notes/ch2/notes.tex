@@ -1,0 +1,441 @@
+\documentclass[letterpaper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage[shortlabels]{enumitem}
+\usepackage{amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz-cd}
+\usepackage{mathabx}
+\usepackage{dsfont}
+\usepackage{relsize}
+\usepackage{xifthen}
+\usepackage{extarrows}
+\usepackage{pifont}
+\usepackage{mathtools}
+\usepackage{xspace}
+
+\newenvironment{theorem}[2][]{\par\medskip
+	\noindent \textbf{Theorem~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{lemma}[2][]{\par\medskip
+	\noindent \textbf{Lemma~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{corollary}[2][]{\par\medskip
+	\noindent \textbf{Corollary~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{remark}[2][]{\par\medskip
+	\noindent \textbf{Remark~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{remarkNonNum}[1][]{\par\medskip
+	\noindent \textbf{Remark}~~~#1 \rmfamily\em}{\medskip}
+	
+\newenvironment{notation}[2][]{\par\medskip
+	\noindent \textbf{Notation~#2}~~~#1 \rmfamily\em}{\medskip}
+
+\newenvironment{convention}[2][]{\par\medskip
+	\noindent \textbf{Convention~#2}~~~#1 \rmfamily\em}{\medskip}
+	
+\newenvironment{examplesNonNum}[1][]{\par\medskip
+	\noindent \textbf{Examples}~~~#1 \rmfamily}{\medskip}
+
+\newenvironment{definition}[2][]{\par\medskip
+	\noindent \textbf{Definition~#2}~~~#1 \rmfamily}{\medskip}
+
+\usetikzlibrary{decorations.markings,positioning}
+
+\newcommand{\iso}{\cong}
+
+\newcommand{\Z}{\mathbb{Z}}
+\renewcommand{\S}{\GenericError{}}
+
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+
+\renewcommand{\l}{\lambda}
+\newcommand{\aeq}{=_\alpha}
+\newcommand{\beq}{=_\beta}
+\newcommand{\nbeq}{\neq_\beta}
+\newcommand{\naeq}{\neq_\alpha}
+\newcommand{\bnf}{$\beta$-nf\xspace}
+
+\newcommand{\betaro}{\rightarrow_\beta}
+\newcommand{\betar}{\twoheadrightarrow_\beta}
+
+
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+    \node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
+
+\DeclareMathOperator{\Ima}{Im}
+\DeclareMathOperator{\Hom}{Hom}
+\DeclareMathOperator{\Sub}{Sub}
+\DeclareMathOperator{\pr}{pr}
+\DeclareMathOperator{\fact}{fact}
+\DeclareMathOperator{\ifT}{if}
+\DeclareMathOperator{\iszero}{iszero}
+\DeclareMathOperator{\then}{then}
+\DeclareMathOperator{\elseT}{else}
+\DeclareMathOperator{\mult}{mult}
+\DeclareMathOperator{\pred}{pred}
+
+
+\newcommand{\arr}[1][]{%
+	\ifthenelse{\isempty{#1}}{\longrightarrow}{\xlongrightarrow{#1}}%
+}
+
+\newcommand{\hookarr}[1][]{%
+	\ifthenelse{\isempty{#1}}{\longhookrightarrow}{\lhook\joinrel\xrightarrow{#1}}%
+}
+
+
+\author{Notes by Donald Pinckney}
+\title{Notes from: Type Theory and Formal Proof, Chapter 2}
+
+\begin{document}
+\maketitle
+
+Note that all of the definition, theorem, etc. numbers correspond to the numbers in the textbook.
+
+\section{Lambda-Terms}
+
+The goal of the first chapter is to view and understand the simplest and most abstract features of \emph{functions}. Let $V = \{x, y, z, \cdots\}$ be an infinite set of \emph{variables}. We define the set $\Lambda$ of all $\lambda$-terms as follows.
+
+\begin{definition}[(The set $\Lambda$ of all $\lambda$-terms)]{1.3.2}
+	\begin{enumerate}
+		\item (Variable) If $u \in V$, then $u \in \Lambda$.
+		\item (Application) If $M \in V$ and $N \in V$, then $(M N) \in \Lambda$.
+		\item (Abstraction) If $u \in V$ and $M \in \Lambda$, then $(\lambda u.M) \in \Lambda$.
+	\end{enumerate}
+	Equivalently we can define $\Lambda$ with an abstract syntax: $\Lambda = V \mid (\Lambda \Lambda) \mid (\lambda V . \Lambda)$.
+\end{definition}
+
+\begin{examplesNonNum}
+	$((\lambda x.(x z)) y), (y(\lambda x.(x z))), $ etc.
+\end{examplesNonNum}
+
+\begin{notation}{1.3.4}
+	\begin{enumerate}
+		\item Letters $x, y, z$, etc. are used for variables in $V$.
+		\item Letters $L, M, N, P, Q, R$ are used for elements of $\Lambda$.
+		\item \emph{Syntactic} identity of terms is denoted by $\equiv$, i.e. $(x y) \equiv (x y) \not \equiv (x z)$.
+		\item We also drop parentheses as we wish, using left-associativity for application, and application having higher precedence than abstraction. We may also write multiple variables under $\lambda$ to mean multiple right-associative abstractions. For example, $\lambda xy.x y x \equiv \lambda x . (\lambda y. ((x y) x))$.
+	\end{enumerate}
+\end{notation}
+
+With \emph{terms} (elements of $\Lambda$) defined, we now define \emph{subterms} of a term by means of a recursive definition $\Sub$.
+
+\begin{definition}[(\emph {Multiset} of subterms)]{1.3.5}
+	\begin{enumerate}
+		\item $\Sub(x) = \{x\}$, for all $x \in V$.
+		\item $\Sub((M N)) = \Sub(M) \cup \Sub(N) \cup \{(M N)\}$.
+		\item $\Sub((\lambda x.M)) = \Sub(M) \cup \{(\lambda x.M)\}$.
+	\end{enumerate}
+	Note that we compute these as \emph{multisets}, i.e. counting duplicates.
+\end{definition}
+From this definition it is easy to see that subterms are reflexive and transitive. A \emph{proper} subterm is a subterm excluding reflexivity, i.e. $L$ is a proper subterm of $M$ if $L$ is a subterm of $M$ and $L \not \equiv M$.
+
+\section{Free and bound variables}
+Each occurrence of a variable is either \emph{free}, \emph{bound}, or \emph{binding}. The \emph{binding} occurrences are precisely the occurrences immediately after a $\lambda$. Besides that, variables are initially \emph{free}, until they are \emph{bound} by a matching $\lambda$ binding variable. More precisely we define $FV$ recursively to be the set of free variables in a $\lambda$-term:
+
+\begin{definition}[($FV$, set of free variables in a term)]{1.4.1}
+	\begin{enumerate}
+		\item $FV(x) = \{x\}$.
+		\item $FV(M N) = FV(M) \cup FV(N)$.
+		\item $FV(\lambda x. M) = FV(M) \setminus \{x\}$.
+	\end{enumerate}
+\end{definition}
+
+\begin{examplesNonNum}
+\[
+	FV(\lambda x.x y) = \{y\}
+\]
+\[
+	FV(x(\lambda x. x y)) = \{x, y\} \;\;\;\;\textrm{(Note that the first occurence of $x$ is free, the second occurrence of $x$ is bound)}.
+\]
+\end{examplesNonNum}
+
+\begin{definition}[(Closed term; combinator; $\Lambda^0$)]{1.4.3}
+	By closed $\lambda$-term, combinator, or $\Lambda^0$ is meant terms with no free variables.
+\end{definition}
+
+\section{Alpha conversion}
+
+Since $\lambda$-terms are meant to represent the abstract behavior of functions, the specific names of variables used should not matter. For example, we would like to consider $\lambda x . x x$ to be the same as $\lambda y . y y$, even though syntactically they are distinct. To this end we define an equivalence relation $=_\alpha$ on $\Lambda$ as follows.
+
+\begin{definition}[($\alpha$-conversion or $\alpha$-equivalence, $=_\alpha$)]{1.5.2}
+	Let $M^{x \to y}$ denote the result of replacing every \emph{free} occurrence of $x$ in $M$ with $y$. Then we define $=_\alpha$ as follows:
+	\begin{enumerate}
+		\item (Renaming) $\l x. M =_\alpha \l y . M^{x \to y}$, if $y \not \in FV(M)$ and $y$ is not a binding variable in $M$.
+		\item (Compatibility) If $M =_\alpha N$, then $M L =_\alpha N L$, $L M =_\alpha L N$, and, for arbitrary $z$, $\lambda z . M =_\alpha \lambda z . N$.
+		\item (Reflexivity) $M =_\alpha M$.
+		\item (Symmetry) If $M =_\alpha N$, then $N =_\alpha M$.
+		\item (Transitivity) If $L =_\alpha M$ and $M =_\alpha N$, then $L =_\alpha N$.
+	\end{enumerate}
+\end{definition}
+Note that $\alpha$-equivalence does \emph{NOT} allow you to rename arbitrary variables, it only allows for renaming at binding occurrences (and the appropriately bound occurrences). That is, $x y \naeq z y$, but $\l x . x y \aeq \l z. z y$.
+
+\begin{examplesNonNum}
+\begin{align*}
+	(\l x. x(\l z. x y)) z &\aeq (\l x. x(\l z. x y)) z \\
+	(\l x. x(\l z. x y)) z &\aeq (\l u. u(\l z. u y)) z \\
+	(\l x. x(\l z. x y)) z &\aeq (\l z. z(\l x. z y)) z \\
+	(\l x. x(\l z. x y)) z &\naeq (\l y. y(\l z. y y)) z \\
+	(\l x. x(\l z. x y)) z &\naeq (\l z. z(\l z. z y)) z \\
+	(\l x. x(\l z. x y)) z &\naeq (\l u. u(\l z. u y)) v \\
+	\l x y. x z y &\aeq \l v y. v z y \\
+	\l x y. x z y &\aeq \l v u. v z u \\
+	\l x y. x z y &\naeq \l y y. y z y \\
+	\l x y. x z y &\naeq \l z y. z z y
+\end{align*}
+\end{examplesNonNum}
+
+\section{Substitution}
+In order to build up to defining $\beta$-reduction, we now give a formal definition of \emph{substitution}. By $M[x:= N]$ is meant replacing the free variable $x$ with $N$ in $M$. Formally:
+
+\begin{definition}[(Substitution)]{1.6.1}
+	\begin{enumerate}
+		\item $x[x := N] \equiv N$.
+		\item $y[x := N] \equiv y$ if $x \not \equiv y$.
+		\item $(PQ)[x := N] \equiv (P[x := N])(Q[x := N])$.
+		\item $(\l y. P)[x := N] \equiv \l z . (P^{y \to z}[x := N])$, if $\l z. P^{y \to z}$ is an $\alpha$-variant of $\l y . P$ such that $z \not \in FV(N)$.
+	\end{enumerate}
+	Note that something of the form $P[x := N]$ is not literally a lambda-term, but is a meta-notation for some actual lambda-term.
+\end{definition}
+
+Most of Definition 1.6.1 is straightforward, but case 4 is somewhat subtle.  The issue with substituting under an abstraction is that a free variable in $N$ may accidentally become bound. For example, consider $(\l y. y x)[x := x y]$. The $y$ in $x y$ is free so we expect it to remain free after substitution. But if we blindly substitute we get $\l y . y (xy)$ and the $y$ incorrectly becomes bound. Rather, we follow case 4 and first rename the abstraction to get $\l z . ((z x)[x := xy])$, and then finally $\l z.z (x y)$. However, in many cases the abstraction binding variable is not a free variable in $N$, in which case we do not need to rename the abstraction.
+
+%%%%%%%%  Sequential Substitution and Lemma 1.6.5 %%%%%%%%%%%%%%%
+%Next, note that substitution is not commutative, so in general $M[x := N][y := L]$ may be not equal to $M[y := L][x := N]$. For a counter example, $x[x := y][y := x] \equiv x \not \equiv y \equiv x[y := x][x := y]$.
+
+\section{Lambda-terms module $\alpha$-equivalence}
+Previously we defined the equivalence relation $\aeq$ on $\Lambda$ using the intuition that $\alpha$-equivalent terms represent essentially the same function (or at least the same behavior), just written down with different variable names. The following lemma shows that indeed $\alpha$-equivalence respects lambda-term construction as well as substitution.
+
+\begin{lemma}{1.7.1}
+	Let $M_1 \aeq N_1$ and $M_2 \aeq N_2$. Then:
+	\begin{enumerate}
+		\item $M_1 N_1 \aeq M_2 N_2$.
+		\item $\l x. M_1 \aeq \l x . M_2$.
+		\item $M_1[x := N_1] \aeq M_2[x := N_2]$.
+	\end{enumerate}
+\end{lemma}
+
+Whichever term-construction operations or substitution operations we perform will always respect $\alpha$-equivalence classes. Thus we can mod out by $\alpha$-equivalence:
+
+\begin{notation}{1.7.3}
+	With an abuse of notation we say that $M \equiv N$ if they are in fact $\alpha$-equivalent.
+\end{notation}
+
+\begin{remarkNonNum}
+	An alternate approach to $\alpha$-equivalence may be using de Bruijn indices.
+\end{remarkNonNum}
+
+Since we can choose binding variables as we wish, we may as well choose a convention that is convenient.
+
+\begin{convention}[(Barendregt convention)]{1.7.4}
+	We chose the binding variables to all be different, and such that each of them is different from any free variables in the term. So instead of writing $(\l x y . x z)(\l x z . z)$ we write $(\l x y. x z)(\l u v . v)$ for example. We also extend this convention to not-yet-performed substitutions, so we do not write $(\l x .  x y z)[y := \l x.x]$, nor do we write $(\l x .  x y z)[y := \l y.y]$, and nor do we write $(\l x .  x y z)[y := \l z.z]$, but rather we write $(\l x .  x y z)[y := \l u.u]$, for example.
+\end{convention}
+
+\section{Beta reduction}
+
+\begin{definition}[(One-step $\beta$-reduction, $\betaro$)]{1.8.1}
+	\begin{enumerate}
+		\item $(\l x . M)N \betaro M[x := N]$
+		\item If $M \betaro N$, then $ML \betaro NL$, $LM \betaro LN$ and $\l x. M \betaro \l x . N$
+	\end{enumerate}
+\end{definition}
+
+Note that case 2 says that any subterm of the form in case 1 can be chosen to be reduced. Such a subterm that is chosen to be reduced is called a \emph{redex}, and the outcome is the \emph{contractum}. The intuition of $\betaro$ is that $(\l x . M)N$ represents a function being applied to an argument $N$, and $\betaro$ is the means to compute the result, via substitution of the argument into the body of the function (abstraction).
+
+\begin{examplesNonNum}
+	\begin{enumerate}
+		\item $(\l x . x (x y)) N \betaro N (N y)$
+		\item In $(\l x . (\l y . y x) z) v$ there are 2 possible one-step $\beta$-reductions, which yield 2 non-$\alpha$ equivalent results:
+		\[
+			(\l x . (\l y . y x) z) v \betaro (\l y. y v)z
+		\]
+		\[
+			(\l x . (\l y . y x) z) v \betaro (\l x . zx)v
+		\]
+		However, if we apply another one-step $\beta$-reduction to each result we obtain $zv$ in both cases.
+		
+		\item $(\l x . x x)(\l x . x x) \betaro (\l x . x x)(\l x . x x)$
+	\end{enumerate}
+\end{examplesNonNum} 
+
+Now we define general $\beta$-reduction which is simply repeated one-step $\beta$ reduction.
+
+\begin{definition}[($\beta$-reduction, $\betar$)]{1.8.3}
+	We say that $M \betar N$ if there is a (possibly 0 length) chain $M \equiv M_0 \betaro M_1 \betaro \cdots \betaro M_{n-1} \betaro M_n \equiv N$.
+\end{definition}
+Clearly $\betar$ is reflexive and transitive.
+
+We can define an equivalence relation $\beq$ as follows.
+
+\begin{definition}[($\beta$-conversion, $\beta$-equality, $\beq$)]{1.8.5}
+	We say that $M \beq N$ if there is a sequence $M \equiv M_0, M_1, \cdots, M_n \equiv N$ such that $M_i \betaro M_{i+1}$ or $M_{i+1} \betaro M_i$. In other words, each pair $M_i$ and $M_{i+1}$ are related by $\betaro$ but not necessarily left-to-right.
+\end{definition}
+
+\begin{examplesNonNum}
+	$(\l y . y v)z \beq (\l x . zx )v$ by the chain $(\l y. y v)z \betaro z v \leftarrow_\beta (\l x . z x)v$
+\end{examplesNonNum}
+
+We have the following result for $\beq$:
+
+\begin{lemma}{1.8.6}
+	\begin{enumerate}
+		\item $\beq$ extends $\betar$ in both directions, i.e. if $M \betar N$ or $N \betar M$ then $M \beq N$.
+		\item $\beq$ is an equivalence relation.
+		\item If $M \betar L_1$ and $M \betar L_2$ then $L_1 \beq L_2$.
+		\item If $L_1 \betar N$ and $L_2 \betar N$ then $L_1 \beq L_2$.
+	\end{enumerate}
+\end{lemma}
+In this way we can see an equivalence class of $\beq$ as representing a single computation / program, but in possible different stages of carrying out the computation.
+
+\section{Normal forms and confluence}
+
+We now take a closer look at the computational aspects of $\beta$-reduction. First we define the notion of the \emph{outcome} of a lambda-term.
+\begin{definition}[($\beta$-normal form, \bnf, $\beta$-normalizing)]{1.9.1}
+	\begin{enumerate}
+		\item \emph{$M$ is in $\beta$-normal form (in \bnf)} if $M$ does not contain any redex.
+		\item \emph{$M$ has a \bnf (is $\beta$-normalizing)} if there is an $N$ in \bnf such that $M \beq N$. Such an $N$ is a \emph{$\beta$-normal form of $M$.}
+	\end{enumerate}
+\end{definition}
+
+The following lemma is trivial:
+
+\begin{lemma}{1.9.2}
+	If $M$ is in \bnf, then $M \betar N$ implies $M \equiv N$, since there are no possible reductions to perform.
+\end{lemma}
+
+\begin{examplesNonNum}
+	\begin{enumerate}
+		\item $(\l x. (\l y. y x)z)v$ has a \bnf of $zv$ since $(\l x. (\l y. y x)z)v \betar zv$ and $zv$ is in \bnf.
+		\item Let $\Omega = (\l x . x x)(\l x . x x)$ has no \bnf.
+		\item Let $\Delta = \l x . x x x$. Then, $\Delta \Delta \betaro \Delta \Delta \Delta \betaro \Delta \Delta \Delta \Delta \betaro \cdots$. Since there are no other options for redexes to apply in this chain, $\Delta \Delta$ has no \bnf.
+		\item Let $\Omega$ be defined as in 2. Then $(\l u . v)\Omega$ has a \bnf of $v$, but you must be careful when choosing the redex, since if you always choose $\Omega$ as the redex you will never reach \bnf.
+	\end{enumerate}
+\end{examplesNonNum}
+
+Example 4. above shows that the choice of what path to take in $\beta$-reduction might matter. We define a reduction path now.
+
+\begin{definition}[(Reduction path)]{1.9.5}
+	A \emph{finite reduction path} from $M$ is a finite sequence $M \equiv N_0 \betaro N_1 \betaro N_2 \betaro \cdots \betaro N_n$, or equivalently if $M \betar N_n$. An \emph{infinite reduction path} from $M$ is an infinite sequence sequence $M \equiv N_0 \betaro N_1 \betaro N_2 \betaro \cdots$.
+\end{definition}
+
+We can now define some subsets of $\Lambda$ that ``behave nicely'' with $\beta$-reduction:
+
+\begin{definition}[(Weak normalization and strong normalization)]{1.9.6}
+	\begin{enumerate}
+		\item $M$ is \emph{weakly normalizing} if there is an $N$ in \bnf such that $M \betar N$.
+		\item $M$ is \emph{strongly normalizing} if there are no infinite reduction paths starting from $M$.
+	\end{enumerate}
+\end{definition}
+Strongly normalizing implies weakly normalizing.
+
+\begin{examplesNonNum}
+	\begin{enumerate}
+		\item $(\l u . v)\Omega$ is weakly normalizing, but not strongly normalizing.
+		\item $(\l x. (\l y. y x)z)v$ is strongly normalizing.
+		\item $\Omega$ and $\Delta \Delta$ are not weakly normalizing.
+	\end{enumerate}
+\end{examplesNonNum}
+
+
+\begin{theorem}[(Church-Rosser; CR; Confluence)]{1.9.8}
+	Suppose that for a term $M$, we have that $M \betar N_1$ and $M \betar N_2$. Then there exists a term $N_3$ such that $N_1 \betar N_3$ and $N_2 \betar N_3$.	
+\end{theorem}
+
+Please see other sources for the proof (it is not included in the book either). The intuitive consequence of the Church-Rosser Theorem is that the outcome of a computation (if it exists) is independent of the order in which intermediate computations are performed. This is what we expect in computations. For example, in $(1 + 2) + (3 + 4)$ we can compute either $3 + (3 + 4)$ or $(1 + 2) + 7$ first, but it does not matter as we will get the same answer at the end.
+
+\begin{corollary}{1.9.9}
+	Suppose that $M \beq N$. Then there is an $L$ such that $M \betar L$ and $N \betar L$.
+\end{corollary}
+
+\begin{proof}
+	See book for proof.
+\end{proof}
+
+From Corollary 1.9.9 we obtain the following result:
+
+\begin{lemma}{1.9.10}
+	\begin{enumerate}
+		\item If $M$ has $N$ as a \bnf, then $M \betar N$.
+		\item A term $M$ has at most one \bnf.
+	\end{enumerate}	
+\end{lemma}
+
+\begin{proof} $ $
+	\begin{enumerate}
+		\item We have that $M \beq N$ with $N$ in \bnf. By Corollary 1.9.9 there is an $L$ such that $M \betar L$ and $N \betar L$. Since $N$ is in \bnf by Lemma 1.9.2 $N \equiv L$. This means that $M \betar L \equiv N$, so $M \betar N$.
+		\item Assume that $M$ has 2 $\beta$-nfs, $N_1$ and $N_2$. By part 1. we have that $M \betar N_1$ and $M \betar N_2$. By the Church-Rosser Theorem there is an $L$ such that $N_1 \betar L$ and $N_2 \betar L$. But since both $N_1$ and $N_2$ are in \bnf we have that $N_1 \equiv L$ and $N_2 \equiv L$, so $N_1 \equiv N_2$.
+	\end{enumerate}
+\end{proof}
+
+Informally Lemma 1.9.10 as the following consequences:
+\begin{enumerate}
+	\item If a term has an outcome (i.e. a \bnf), then we can reach this outcome by only performing \emph{forward} computation (i.e. $\beta$-reduction).
+	\item An outcome of a computation, if it exists, is unique.
+\end{enumerate}
+
+\section{Fixed Point Theorem}
+
+\begin{theorem}[(Fixed Point Theorem)]{1.10.1}
+	Suppose $L \in \Lambda$. Define $M := (\l x. L(x x))(\l x . L(x x))$. Then $L M \beq M$.
+\end{theorem}
+\begin{proof}
+	$M \equiv (\l x. L(x x))(\l x . L(x x)) \betaro L ((\l x . L(x x))(\l x . L(x x))) \equiv L M$. Thus, $LM \beq M$.
+\end{proof}
+
+Note that these fixed points do not necessarily represent numbers or other concrete values. For example, we can define a successor function on natural numbers in $\l$-calculus, and such a successor function has a fixed point, but this fixed point does not represent any natural number.
+
+From the above proof it follows that there is a so called \emph{fixed point combinator}, i.e. a closed term which ``constructs'' a fixed point for an arbitrary given input term. It is given by:
+\[
+	Y \equiv \l y . (\l x . y (x x))(\l x . y (x x))
+\]
+This gives that for any term $L$, $YL$ is a fixed point of $L$.
+
+A very nice consequence of the existence of fixed points is the ability to solve recursive equations. Suppose we have the following recursive equation:
+\[
+	M \beq \boxed{ \cdots \cdots M \cdots \cdots }
+\]
+in which $M$ might appear multiples times on the right side. Our goal is to solve for $M$ such that the given equation holds. Let $L$ be the right hand side expression, but with abstracted by $\l z$ and with $M$ replaced by $\l z$. That is, $L \equiv \l z . \boxed{ \cdots \cdots z \cdots \cdots}$. Clearly, $LM \betaro \boxed{ \cdots \cdots M \cdots \cdots }$. Thus, it suffices to find an $M$ such that $M \beq L M$, as then $M \beq \boxed{ \cdots \cdots M \cdots \cdots }$. Such an $M$ explicitly exists by Theorem 1.10.1. Let's see this with some examples.
+
+\begin{examplesNonNum}
+	\begin{enumerate}
+		\item Does there exists a term $M$ such that $M x \beq x M x$? We can rephrase this as asking if there exists an $M$ such that $M \beq \l x . x M x$. Define $L := \l z . (\l x . x z x)$. Then $LM \betaro \l x . x M x$, so if we find $M$ such that $M \beq L M$ then we are done. We can do this via the fixed point combinator, giving $Y L$ to be the desired result.
+		\item We can code natural numbers in untyped lambda calculus, as well as \emph{add, mult, pred, iszero}, and we can also code booleans and a conditional \emph{if-then-else}. (See exercises in book for these). Suppose we already have these, and we wish to define a function \emph{fact} which computes the factorial. In other words, we want to get some $fact \equiv \l n . (\cdots)$. Rather than work with the lambda terms explicitly, we can say that \emph{fact} should obey this recursive equation:
+		\[
+			\fact x \beq \ifT (\iszero x) \then 1 \elseT \mult x \; (\fact(\pred x))
+		\]
+		Then, we can obtain the entire term $\fact$ by solving this equation using the above method.
+	\end{enumerate}
+\end{examplesNonNum}
+
+\section{Conclusions}
+
+\begin{enumerate}
+	\item Things that are pretty great about $\l$-calculus:
+	\begin{itemize}
+		\item We have formalized the behavior of functions.
+		\item It is a clean and simply formalization (I guess?).
+		\item Substitution seems to be fundamental to function evaluation. It is a bit tricky to get right, but we have treated it rigorously in $\l$-calculus.
+		\item Conversion is a cool extension of reduction.
+		\item We have a formalization of ``outcomes'' of computations by \bnf.
+		\item Confluence (Church-Rosser Theorem) holds, which is something we would expect for computations.
+		\item \bnf is unique (if it exists)
+		\item Many recursive equations can be solved via fixed points.
+		\item $\l$-calculus is Turing-complete.
+	\end{itemize}
+	
+	\item Things that aren't so great:
+	\begin{itemize}
+		\item Weird things such as self-application ($x x$ or $M M$) are allowed, though they are quite counter-intuitive.
+		\item Not all terms have a \bnf, we get undesired infinite computation.
+		\item Every $\l$-term has a fixed point, which is quite different from ordinary functions in mathematics.
+	\end{itemize}
+\end{enumerate}
+
+\end{document}
