@@ -16,12 +16,12 @@ Roughly we will plan to discuss primary content (i.e. readings from the book) on
 
 Meeting times are yet to be determined.
 
-| Meeting Dates | Readings Due  |
+| Meeting Dates | Readings Due, etc.  |
 | ------------- |---------------|
 | Tuesday, May 28      |  |
 | Thursday, May 30      | Chapter 1 or [Chapter 1 notes](https://github.com/donald-pinckney/type-theory-seminar/raw/master/notes/ch1/notes.pdf)      |
 | Tuesday, June 4      | Chapter 2 or [Chapter 2 notes](https://github.com/donald-pinckney/type-theory-seminar/raw/master/notes/ch2/notes.pdf)      |
-| Thursday, June 6      |       |
+| Thursday, June 6      |   **NO MEETING**   |
 | Tuesday, June 11      | Chapter 3      |
 | Thursday, June 13     |       |
 | Tuesday, June 18      | Chapter 4      |
