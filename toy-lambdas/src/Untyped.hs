@@ -3,6 +3,7 @@ module Untyped
   , exec
   , pprint
   , betaReduce
+  , normal
   , parse
   ) where
 
@@ -150,45 +151,3 @@ pprint = putStrLn . pprint_
 pprint' :: Maybe Term -> IO ()
 pprint' (Just t) = pprint t
 pprint' Nothing = putStrLn "parse error"
-
-
-{- Tests -}
-
-x = Var "x"
-y = Var "y"
-z = Var "z"
-a = Var "a"
-b = Var "b"
-c = Var "c"
-d = Var "d"
-id_ = Abst "x" x
-id_id = Appl id_ id_
-idy = Abst "y" y
-
-zero = parse "λ f . λ x . x"
-one = parse "λ f . λ x . (f x)"
-
-parseTests = [ Test x                              (parse "x")             "parsing a varable"
-             , Test y                              (parse "y")             "parsing a variable"
-             , Test (Appl x y)                     (parse "x y")           "parsing an application"
-             , Test (Appl (Appl x x) x)            (parse "x x x")         "application should be left associative"
-             , Test (Appl (Appl (Appl a b) c) d)   (parse "a b c d")       "application should be left associative"
-             , Test (Abst "x" (Appl (Appl x x) x)) (parse "\\ x . x x x ") "abstraction should bind looser than application"
-             ]
-
-normalTests = [ Test True  (normal x)              "Vars are in normal form"
-              , Test True  (normal $ Appl x y)     "Application of two vars is normal"
-              , Test False (normal $ Appl id_ y)    "Application of abstraction is not normal"
-              , Test False (normal $ id_id)        "Application of abstraction is not normal"
-              , Test True  (normal $ Appl x id_)    "Application of abstraction is not normal"
-              , Test False (normal $ Appl x id_id) "Application with non-normal rhs is not normal"
-              , Test False (normal $ Appl id_id x) "Application with non-normal lhs is not normal"
-              ] where
-
-reductionTests = [ Test x     (betaReduce (Appl id_ x))      "`(λ x . x) x` should reduce to x"
-                 , Test id_id (betaReduce (Appl id_ id_id))  "`(λ x . x) ((λ x . x) (λ x . x))` should reduce to `(λ x . x) (λ x . x)`"
-                 , Test id_id (betaReduce (Appl idy id_id))  "`(λ y . y) ((λ x . x) (λ x . x))` should reduce to `(λ x . x) (λ x . x)`"
-                 , Test (Appl x x) (betaReduce (Appl x (Appl id_ x)))  "`λ x . (λ x . x) x`  should reduce to `λ x . x`"
-                 ]
-
-
