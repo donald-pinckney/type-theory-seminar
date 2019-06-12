@@ -93,7 +93,7 @@ exec t = if normal t then t else exec (betaReduce t)
 
 term :: ReadP Term
 term = do skipSpaces
-          var <|> abst <|> appl <|> between (char '(') (char ')') term
+          var <|> appl <|> abst <|> between (char '(') (char ')') term
 
 char_or_under :: ReadP Char
 char_or_under = choice (Prelude.map char $ ('_' : ['a' .. 'z']))
