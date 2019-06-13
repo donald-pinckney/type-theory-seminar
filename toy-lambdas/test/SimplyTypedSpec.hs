@@ -50,3 +50,9 @@ spec = do
         it"Nested parentheses: `((A->B)->C)->D->E`" $ do
           (parseType "A->B->C->D->E") `shouldBe` tpA_B__C___D_E
 
+    describe "SimplyTyped.typecheck" $ do
+        it "Type checking var present in context" $ do
+          (check c1 (Var "a")) `shouldBe` Just (TVar "A")
+        it "Type checking var present in context" $ do
+          (check c1 (Var "z")) `shouldBe` Nothing
+

@@ -9,10 +9,11 @@ module SimplyTyped
   , pprint
   , pprint_
   , pprint_tp_
+  , check
   ) where
 
 import Text.ParserCombinators.ReadP
-import Data.Set (Set, notMember, insert, empty)
+import Data.Set (Set, notMember, insert, empty, singleton, union)
 import Data.List (sort)
 import Control.Applicative
 
@@ -47,6 +48,38 @@ ctxCompare _ = True
 ctxDomain :: Context -> [String]
 ctxDomain = map name
 
+-- | Recursively get all type variable names from a term
+termToTVars :: Term -> Set String
+termToTVars (Var x)               = Data.Set.empty
+termToTVars (Lambda (Decl v t) b) = union (typeToTVars t) (termToTVars b)
+termToTVars (Appl l r)            = union (termToTVars l) (termToTVars r)
+
+-- | Recursively get all type variable names from a type
+typeToTVars :: Type -> Set String
+typeToTVars (TVar x)     = singleton x
+typeToTVars (TArrow l r) = union (typeToTVars l) (typeToTVars r)
+
+-- | Lookup a type associated with a variable in a @Context@
+ctxLookup :: Context -> String -> Maybe Type
+ctxLookup []   name = Nothing
+ctxLookup ((Decl x tp):ds) name = if x == name then Just tp else ctxLookup ds name
+
+{- Type Checking -}
+
+-- | Given a context, type check the program. If type checking succeeds, return
+-- @Just tp@, where @tp@ is the type of the program. Otherwise, return
+-- @Nothing@, signifying that type checking failed.
+--
+-- TODO: The current setup is insufficient. We will need to build up some sort
+-- of unification for variable names. For instance, consider the following
+-- program:
+-- > check (λ a:A . (λ b:B . b) a"
+-- This applies (λ b:B . b) to variable a of type A. This _can_ type check, but
+-- we need to unify types A and B.
+check :: Context -> Term -> Maybe Type
+check ctx (Var x)            = error "Not implemented"
+check ctx (Lambda decl body) = error "Not implemented"
+check ctx (Appl fn arg)      = error "Not implemented"
 
 {- Parsing -}
 
