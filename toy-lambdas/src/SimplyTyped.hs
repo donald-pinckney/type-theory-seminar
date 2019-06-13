@@ -14,11 +14,13 @@ module SimplyTyped
 
 import Text.ParserCombinators.ReadP
 import Data.Set (Set, notMember, insert, empty, singleton, union)
+import Data.Map.Strict (Map)
 import Data.List (sort)
 import Control.Applicative
 
 data Type = TVar String
           | TArrow Type Type
+          | Unknown
           deriving (Show, Eq)
 
 data Term = Var String
@@ -64,22 +66,31 @@ ctxLookup :: Context -> String -> Maybe Type
 ctxLookup []   name = Nothing
 ctxLookup ((Decl x tp):ds) name = if x == name then Just tp else ctxLookup ds name
 
+ctxInsert :: Context -> Decl -> Context
+ctxInsert [] decl = return decl
+ctxInsert (d:ds) decl = if (name d) == (name decl) then decl:ds else d : (ctxInsert ds decl)
+
 {- Type Checking -}
 
--- | Given a context, type check the program. If type checking succeeds, return
--- @Just tp@, where @tp@ is the type of the program. Otherwise, return
--- @Nothing@, signifying that type checking failed.
---
--- TODO: The current setup is insufficient. We will need to build up some sort
--- of unification for variable names. For instance, consider the following
--- program:
--- > check (λ a:A . (λ b:B . b) a"
--- This applies (λ b:B . b) to variable a of type A. This _can_ type check, but
--- we need to unify types A and B.
-check :: Context -> Term -> Maybe Type
-check ctx (Var x)            = error "Not implemented"
-check ctx (Lambda decl body) = error "Not implemented"
-check ctx (Appl fn arg)      = error "Not implemented"
+-- | Given a typing environment, type check the program. If type checking
+-- succeeds, return @Right tp@, where @tp@ is the type of the program. Otherwise,
+-- return @Left err_msg@, where @err_msg@ is a @String@ containing an error
+-- message explaining why type checking failed.
+check :: Context -> Term -> Either String Type
+check ctx (Var x) = case ctxLookup ctx x of
+                         Nothing -> Left $ "Context doesn't contain a declaration for " ++ x
+                         Just t  -> Right t
+check ctx (Lambda decl body) = (check (ctxInsert ctx decl) body) >>= (\t -> Right $ TArrow (tp decl) t)
+
+check ctx (Appl fn arg)      =
+  case (check ctx fn, check ctx arg) of
+    (Right (TArrow dom cod), Right argTp) ->
+      if dom == argTp
+         then Right cod
+         else Left $ "Argument doesn't match function type"
+    (Right (TArrow dom cod), Left m) -> Left m
+    (Right _, _) -> Left "Function types must be arrow types"
+    (Left m, _) -> Left m
 
 {- Parsing -}
 

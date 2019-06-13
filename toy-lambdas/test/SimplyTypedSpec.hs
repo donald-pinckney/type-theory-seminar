@@ -2,6 +2,7 @@ module SimplyTypedSpec where
 
 import Test.Hspec
 import SimplyTyped
+import Data.Either (isLeft)
 
 c1 = [Decl "a" (TVar "A"), Decl "b" (TVar "B")]
 c2 = [Decl "a" (TVar "A"), Decl "a" (TVar "B")]
@@ -51,8 +52,38 @@ spec = do
           (parseType "A->B->C->D->E") `shouldBe` tpA_B__C___D_E
 
     describe "SimplyTyped.typecheck" $ do
-        it "Type checking var present in context" $ do
-          (check c1 (Var "a")) `shouldBe` Just (TVar "A")
-        it "Type checking var present in context" $ do
-          (check c1 (Var "z")) `shouldBe` Nothing
+        it "Checking var when present in context" $ do
+          (check c1 (Var "a")) `shouldBe` Right (TVar "A")
+
+        it "Checking var when not present in context" $ do
+          isLeft (check c1 (Var "z")) `shouldBe` True
+
+        it "Checking identity function with bound var not in context" $ do
+          (check [] (Lambda (Decl "a" (TVar "A")) (Var "a")))
+          `shouldBe`
+          Right (TArrow (TVar "A") (TVar "A"))
+
+        it "Checking function with free var in context" $ do
+          (check [(Decl "b" (TVar "B"))] (Lambda (Decl "a" (TVar "A")) (Var "b")))
+          `shouldBe`
+          Right (TArrow  (TVar "A") (TVar "B"))
+
+        it "Checking function with free var not in context" $ do
+          isLeft (check [] (Lambda (Decl "a" (TVar "A")) (Var "b")))
+          `shouldBe`
+          True
+        it "Checking function with bound var in context" $ do
+          (check c4 (Lambda (Decl "a" (TVar "X")) (Var "b")))
+          `shouldBe`
+          Right (TArrow (TVar "X") (TVar "B"))
+
+        it "Checking nested abstraction" $ do
+          (check [] (Lambda (Decl "a" (TVar "A")) (Lambda (Decl "b" (TVar "B")) (Var "a"))))
+          `shouldBe`
+          Right (TArrow (TVar "A") (TArrow (TVar "B") (TVar "A")))
+
+        it "Checking nested abstraction with shadowed bound variable" $ do
+          (check c4 (Lambda (Decl "a" (TVar "B")) (Lambda (Decl "a" (TVar "C")) (Var "a"))))
+          `shouldBe`
+          Right (TArrow (TVar "B") (TArrow (TVar "C") (TVar "C")))
 
