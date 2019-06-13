@@ -1,0 +1,16 @@
+package ch1
+
+modules = AST
+    , BetaNormalForm
+    , BetaReduction
+    , Main
+    , Parse
+    , ParseUtils
+    , PrettyPrint
+    , Resolve
+    , Result
+    , Substitution
+
+executable = repl
+main = Main
+tests = Parse.parseTests
