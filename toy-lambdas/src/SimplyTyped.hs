@@ -94,9 +94,11 @@ check ctx (Appl fn arg)      =
 
 {- Parsing -}
 
+parens = between (char '(') (char ')')
+
 term :: ReadP Term
 term = do skipSpaces
-          var <|> abst <|> appl <|> between (char '(') (char ')') term
+          var <|> appl <|> abst <|> parens term
 
 uppercase :: ReadP Char
 uppercase = choice (map char ['A'..'Z'])
@@ -121,17 +123,13 @@ varType = do c <- uppercase
              return $ TVar (c : cs)
 
 arrowType :: ReadP Type
-arrowType = do skipSpaces
-               l <- varType <|> parens atype
-               skipSpaces
-               string "->"
-               skipSpaces
-               r <- atype
-               skipSpaces
-               return $ TArrow l r
+arrowType = do tlist <- atype `sepBy1` (string "->")
+               case tlist of
+                 h : t -> return $ foldr (\tp arr -> TArrow tp arr) h t
+                 [] -> error $ "parse error: Found empty type"
 
 atype :: ReadP Type
-atype = arrowType <++ varType
+atype = arrowType <++ varType <|> parens atype
 
 parseType :: String -> Type
 parseType s = let parses = filter (null . snd) ((readP_to_S atype) s) in
@@ -157,8 +155,6 @@ abst = do skipSpaces
           skipSpaces
           body <- term
           return $ Lambda (Decl nm tp) body
-
-parens = between (char '(') (char ')')
 
 _appl :: [Term] -> Term
 _appl [] = error "Parse error"
