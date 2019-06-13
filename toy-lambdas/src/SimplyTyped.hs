@@ -15,7 +15,6 @@ import Text.ParserCombinators.ReadP
 import Data.Set (Set, notMember, insert, empty)
 import Data.List (sort)
 import Control.Applicative
-import UnitTests
 
 data Type = TVar String
           | TArrow Type Type
@@ -91,9 +90,9 @@ atype :: ReadP Type
 atype = arrowType <++ varType
 
 parseType :: String -> Type
-parseType s = let parses = (readP_to_S atype) s in
+parseType s = let parses = filter (null . snd) ((readP_to_S atype) s) in
                   case parses of
-                    [] -> error "parse error"
+                    [] -> error $ "parse error: Could not parse " ++ s
                     _  -> fst (last parses)
 
 var :: ReadP Term

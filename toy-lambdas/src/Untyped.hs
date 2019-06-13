@@ -10,7 +10,6 @@ module Untyped
 import Text.ParserCombinators.ReadP
 import Data.Set
 import Control.Applicative
-import UnitTests
 
 
 -- |Our grammar: a Term consists of variables, function abstraction, and
