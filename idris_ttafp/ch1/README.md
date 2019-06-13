@@ -1,5 +1,11 @@
 # Idris implementation of type theory stuff
 
+## How to Run / Build
+
+- Run: `make run`
+- Build: `make`
+- Typecheck and run unit tests: `make test`
+
 ## What's currently implemented
 
 - Untyped Lambda Calculus parser
