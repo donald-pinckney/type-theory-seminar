@@ -123,7 +123,7 @@ varType = do c <- uppercase
              return $ TVar (c : cs)
 
 arrowType :: ReadP Type
-arrowType = do tlist <- atype `sepBy1` (string "->")
+arrowType = do tlist <- (varType <|> parens atype) `sepBy1` (string "->")
                case tlist of
                  h : t -> return $ foldr (\tp arr -> TArrow tp arr) h t
                  [] -> error $ "parse error: Found empty type"
