@@ -2,7 +2,6 @@ module UntypedSpec where
 
 import Test.Hspec
 import Untyped
-import UnitTests
 
 x = Var "x"
 y = Var "y"

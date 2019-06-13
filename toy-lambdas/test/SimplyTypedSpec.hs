@@ -2,7 +2,6 @@ module SimplyTypedSpec where
 
 import Test.Hspec
 import SimplyTyped
-import UnitTests
 
 c1 = [Decl "a" (TVar "A"), Decl "b" (TVar "B")]
 c2 = [Decl "a" (TVar "A"), Decl "a" (TVar "B")]
