@@ -18,6 +18,7 @@ import Data.Map.Strict (Map)
 import Data.List (sort)
 import Control.Applicative
 
+-- | 'Type' represents types a value can be
 data Type = TVar String
           | TArrow Type Type
           | Unknown
@@ -28,27 +29,29 @@ data Term = Var String
           | Appl Term Term
           deriving (Show, Eq)
 
--- | A @Decl@ (or _declaration_) is a statement with a variable as subject. A
+-- | A 'Decl' (or _declaration_) is a statement with a variable as subject. A
 -- _statement_ is of the form M : T, where M is a Term and T is a type
 data Decl = Decl { name :: String, tp :: Type }
             deriving (Show, Eq)
 
--- | A @Context@ is a list of declarations with _different_ subjects. This isn't
+-- | A 'Context' is a list of declarations with _different_ subjects. This isn't
 -- enforced here, but instead should be enforced by an API
 type Context = [Decl]
 
+-- | A 'Context' by definition has no more than a single 'Decl' with a given
+-- variable name. However, this is not enforced in the implementation due to a
+-- lack of dependent types. This function checks for this, returning @True@ if
+-- the required property is satisfied and false otherwise
 checkContextInvariant :: Context -> Bool
-checkContextInvariant = ctxCompare . sort . ctxDomain
+checkContextInvariant = dupsInSorted . sort . (map name)
 
-ctxCompare :: [String] -> Bool
-ctxCompare (x : y : cs)
+-- | A helper function for 'checkContextInvariant', this tests a sorted list
+-- strings for duplicates.
+dupsInSorted :: (Eq a) => [a] -> Bool
+dupsInSorted (x : y : cs)
   | x == y = False
-  | otherwise = ctxCompare (y : cs)
-ctxCompare _ = True
-
-
-ctxDomain :: Context -> [String]
-ctxDomain = map name
+  | otherwise = dupsInSorted (y : cs)
+dupsInSorted _ = True
 
 -- | Recursively get all type variable names from a term
 termToTVars :: Term -> Set String
