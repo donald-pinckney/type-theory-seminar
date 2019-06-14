@@ -72,6 +72,7 @@ spec = do
           isLeft (check [] (Lambda (Decl "a" (TVar "A")) (Var "b")))
           `shouldBe`
           True
+
         it "Checking function with bound var in context" $ do
           (check c4 (Lambda (Decl "a" (TVar "X")) (Var "b")))
           `shouldBe`
@@ -86,4 +87,37 @@ spec = do
           (check c4 (Lambda (Decl "a" (TVar "B")) (Lambda (Decl "a" (TVar "C")) (Var "a"))))
           `shouldBe`
           Right (TArrow (TVar "B") (TArrow (TVar "C") (TVar "C")))
+
+        it "Checking application of non arrow type" $ do
+          isLeft (check [(Decl "a" (TVar "B"))] (Appl (Var "a") (Var "b")))
+          `shouldBe`
+          True
+
+        it "Checking application of arrow type with correct domain type" $ do
+          (check [ Decl "a" (TArrow (TVar "A") (TVar "B"))
+                 , Decl "b" (TVar "A")
+                 ]
+                 (Appl (Var "a") (Var "b")))
+          `shouldBe`
+          Right (TVar "B")
+
+        it "Checking application of arrow type with incorrect domain type" $ do
+          isLeft (check [ Decl "a" (TArrow (TVar "A") (TVar "B"))
+                 , Decl "b" (TVar "B")
+                 ]
+                 (Appl (Var "a") (Var "b")))
+          `shouldBe`
+          True
+
+        it "Checking complicated expression" $ do
+          -- a : A
+          -- b : B
+          -- f : A -> B -> C
+          check [Decl "x" (TVar "A"), Decl "y" (TVar "B")] 
+                (Appl (Appl (Lambda (Decl "a" (TVar "A"))
+                      (Lambda (Decl "b" (TVar "B"))
+                        (Lambda (Decl "f" (TArrow (TVar "A") (TArrow (TVar "B") (TVar "C"))))
+                          (Appl (Appl (Var "f") (Var "a")) (Var "b"))))) (Var "x")) (Var "y"))
+          `shouldBe`
+          Right (TVar "C")
 
