@@ -22,7 +22,7 @@ tpB_C = TArrow (TVar "B") (TVar "C")
 tpC_D = TArrow (TVar "C") (TVar "D")
 tpA__B_C = TArrow (TVar "A") $ TArrow (TVar "B") (TVar "C")
 tpA_B__C = TArrow (TArrow (TVar "A") (TVar "B")) (TVar "C")
-tpA_B__C_D___E = TArrow (TArrow tpA_B tpC_D) tpE
+tpA_B__C_D___E = TArrow tpA_B (TArrow tpC_D tpE)
 tpA_B_C_D_E = TArrow tpA (TArrow tpB (TArrow tpC (TArrow tpD tpE)))
 tpA_B__C___D_E = TArrow (TArrow (TArrow tpA tpB) tpC) (TArrow tpD tpE)
 
@@ -44,12 +44,14 @@ spec = do
           (parseType "A -> B") `shouldBe` tpA_B
         it "Error parsing arrow type without spaces: `A->B`" $ do
           (parseType "A -> B") `shouldBe` tpA_B
+        it "Parsing should handle arbitrary complexity: `(A->B) -> C -> D`" $ do
+          (parseType "(A->B) -> C -> D") `shouldBe` TArrow (TArrow (TVar "A") (TVar "B")) (TArrow (TVar "C") (TVar "D"))
         it "Parsing should handle arbitrary complexity: `(A->B) -> (C->D) -> E`" $ do
           (parseType "(A->B) -> (C->D) -> E") `shouldBe` tpA_B__C_D___E
         it "Arrow types are right associative: `A->B->C->D->E`" $ do
           (parseType "A->B->C->D->E") `shouldBe` tpA_B_C_D_E
         it"Nested parentheses: `((A->B)->C)->D->E`" $ do
-          (parseType "A->B->C->D->E") `shouldBe` tpA_B__C___D_E
+          (parseType "((A->B)->C)->D->E") `shouldBe` tpA_B__C___D_E
 
     describe "SimplyTyped.typecheck" $ do
         it "Checking var when present in context" $ do
