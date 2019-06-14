@@ -1,16 +1,15 @@
 package ch1
 
-modules = AST
+pkgs = shared
+
+modules =
+    AST
     , BetaNormalForm
     , BetaReduction
-    , Main
     , Parse
-    , ParseUtils
     , PrettyPrint
+    , ReplCh1
     , Resolve
-    , Result
     , Substitution
 
-executable = repl
-main = Main
 tests = Parse.parseTests

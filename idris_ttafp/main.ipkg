@@ -1,0 +1,7 @@
+package main
+
+pkgs = ch1
+
+modules = Main
+executable = repl
+main = Main
