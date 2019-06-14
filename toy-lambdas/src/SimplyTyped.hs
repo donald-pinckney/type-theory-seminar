@@ -122,14 +122,17 @@ varType = do c <- uppercase
              cs <- Text.ParserCombinators.ReadP.many $ uppercase <|> lowercase
              return $ TVar (c : cs)
 
-arrowType :: ReadP Type
-arrowType = do tlist <- (varType <|> parens atype) `sepBy1` (string "->")
-               case tlist of
-                 h : t -> return $ foldr (\tp arr -> TArrow tp arr) h t
-                 [] -> error $ "parse error: Found empty type"
+subType :: ReadP Type
+subType = do skipSpaces
+             l <- varType <|> parens atype
+             skipSpaces
+             return l
 
 atype :: ReadP Type
-atype = arrowType <++ varType <|> parens atype
+atype = do tpList <- subType `sepBy1` (string "->")
+           case reverse tpList of
+             [] -> error $ "parse error: Empty type found"
+             h : t -> return $ foldl (\tp1 tp2 -> TArrow tp2 tp1) h t
 
 parseType :: String -> Type
 parseType s = let parses = filter (null . snd) ((readP_to_S atype) s) in
