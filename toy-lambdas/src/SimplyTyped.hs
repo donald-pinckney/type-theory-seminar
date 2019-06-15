@@ -120,20 +120,17 @@ exec t = if normal t then t else exec (betaReduce t)
 -- return @Left err_msg@, where @err_msg@ is a @String@ containing an error
 -- message explaining why type checking failed.
 check :: Context -> Term -> Either String Type
-check ctx (Var x) = case ctxLookup ctx x of
-                         Nothing -> Left $ "Context doesn't contain a declaration for " ++ x
-                         Just t  -> Right t
+check ctx (Var x)            =
+  case ctxLookup ctx x of
+    Nothing -> Left $ "Context doesn't contain a declaration for " ++ x
+    Just t  -> Right t
 check ctx (Lambda decl body) = (check (ctxInsert ctx decl) body) >>= (\t -> Right $ TArrow (tp decl) t)
-
 check ctx (Appl fn arg)      =
   case (check ctx fn, check ctx arg) of
-    (Right (TArrow dom cod), Right argTp) ->
-      if dom == argTp
-         then Right cod
-         else Left $ "Argument doesn't match function type"
-    (Right (TArrow dom cod), Left m) -> Left m
-    (Right _, _) -> Left "Function types must be arrow types"
+    (Right (TArrow dom cod), Right argTp) | dom == argTp -> Right cod
+                                          | otherwise -> Left "Function types must be arrow types"
     (Left m, _) -> Left m
+    (_, Left m) -> Left m
 
 {- Parsing -}
 

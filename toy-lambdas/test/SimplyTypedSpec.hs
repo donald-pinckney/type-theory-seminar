@@ -120,13 +120,14 @@ spec = do
           -- a : A
           -- b : B
           -- f : A -> B -> C
+          -- ((\\a : A . \\b : B . \\f : A -> B -> C . (f a) b) x) y
           check [Decl "x" (TVar "A"), Decl "y" (TVar "B")] 
                 (Appl (Appl (Lambda (Decl "a" (TVar "A"))
                       (Lambda (Decl "b" (TVar "B"))
                         (Lambda (Decl "f" (TArrow (TVar "A") (TArrow (TVar "B") (TVar "C"))))
                           (Appl (Appl (Var "f") (Var "a")) (Var "b"))))) (Var "x")) (Var "y"))
           `shouldBe`
-          Right (TVar "C")
+          Right (TArrow (TArrow (TVar "A") (TArrow (TVar "B") (TVar "C"))) (TVar "C"))
 
     describe "SimplyTyped.substitute" $ do
         it "Lambda" $ do
