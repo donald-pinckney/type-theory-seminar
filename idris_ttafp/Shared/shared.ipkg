@@ -1,0 +1,6 @@
+package shared
+
+modules =
+    AbstractRepl
+    , ParseUtils
+    , Result
