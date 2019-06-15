@@ -29,8 +29,8 @@ tpA_B__C___D_E = TArrow (TArrow (TArrow tpA tpB) tpC) (TArrow tpD tpE)
 zero = (parse "λ f : A -> A . λ x : A . x")
 one = (parse "λ f : A -> A . λ x : A . f x")
 two = (parse "λ f : A -> A . λ x : A . f (f x)")
-add = (parse "λ m : (A -> A) -> A -> A . λ n : (A -> A) -> A -> A . f : A -> A . λ x : A . m f (n f x)")
-mult = (parse "λ m : (A -> A) -> A -> A . λ n : (A -> A) -> A -> A . f : A -> A . λ x : A . m (n f) x")
+add = (parse "λ m : (A -> A) -> A -> A . λ n : (A -> A) -> A -> A . λ f : A -> A . λ x : A . m f (n f x)")
+mult = (parse "λ m : (A -> A) -> A -> A . λ n : (A -> A) -> A -> A . λ f : A -> A . λ x : A . m (n f) x")
 
 spec :: Spec
 spec = do
