@@ -12,7 +12,7 @@ data TypeVariable =
 public export
 data Type' =
       VarType TypeVariable
-    | Arrow Type Type
+    | Arrow Type' Type'
 
 public export
 data Term =

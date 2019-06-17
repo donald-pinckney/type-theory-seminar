@@ -1,6 +1,6 @@
 package main
 
-pkgs = ch1, shared
+pkgs = ch1, ch2, shared
 
 modules = Main
 executable = repl
