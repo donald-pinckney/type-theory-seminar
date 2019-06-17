@@ -4,3 +4,7 @@ modules =
     AbstractRepl
     , ParseUtils
     , Result
+    , TestingSupport
+    , Tests
+
+tests = Tests.sharedTests

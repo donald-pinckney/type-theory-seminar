@@ -1,0 +1,9 @@
+package ch2
+
+pkgs = shared
+
+modules = AST
+    , Parse
+    , Resolve
+
+tests = Parse.parseTests

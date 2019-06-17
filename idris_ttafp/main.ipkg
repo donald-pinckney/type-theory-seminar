@@ -1,7 +1,9 @@
 package main
 
-pkgs = ch1
+pkgs = ch1, shared
 
 modules = Main
 executable = repl
 main = Main
+
+tests = Main.mainTests
