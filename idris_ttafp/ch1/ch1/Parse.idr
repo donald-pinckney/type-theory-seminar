@@ -1,7 +1,8 @@
-module Parse
+module ch1.Parse
 
 import ParseUtils
 import Result
+import TestingSupport
 
 public export
 data ParsedTerm =
@@ -123,78 +124,43 @@ mutual
 
 export
 parse_unpacked : List Char -> Result ParsedTerm
-parse_unpacked str = do
-    let Right (parsed, []) = parseTerm $ str
-        | Left err => Left err
-        | Right (parsed, remainingStr) =>
-            Left ("Remaining input not parsed: " ++ pack remainingStr)
-    pure parsed
+parse_unpacked str = case parseTerm str of
+    (Left err) => Left err
+    (Right (parsed, [])) => Right parsed
+    (Right (parsed, x :: xs)) => Left ("Remaining input not parsed: " ++ pack (x :: xs))
+
+
+-- parse_unpacked str = do
+--     let Right (parsed, []) = parseTerm $ str
+--         | Left err => Left err
+--         | Right (parsed, remainingStr) =>
+--             Left ("Remaining input not parsed: " ++ pack remainingStr)
+--     pure parsed
 
 export
 parse : String -> Result ParsedTerm
-parse = parse_unpacked . unpack
+parse str = parse_unpacked (unpack str)
 
 
 ------------------ Tests -----------------
 
-infixl 4 ===
-infixl 4 /==
-
-(===) : (Show a, Eq a) => (given : a) -> (expected : a) -> Either String ()
-(===) g e = if g == e
-    then Right ()
-    else Left $ "expected " ++ (show g) ++ " == " ++ (show e)
-
-(/==) : (Show a, Eq a) => (given : a) -> (expected : a) -> Either String ()
-(/==) g e = if g /= e
-    then Right ()
-    else Left $ "expected " ++ (show g) ++ " /= " ++ (show e)
-
-runTests : List (Either String ()) -> IO (Nat)
-runTests [] = pure Z
-runTests (Left str :: ts) = do
-    putStrLn $ "Test failed: " ++ str
-    n <- runTests ts
-    pure $ S n
-runTests (Right () :: ts) = runTests ts
-
-makeTest : List (Either String ()) -> IO ()
-makeTest tests = do
-    putStrLn "\nRunning tests..."
-    let numTests = length tests
-    numFail <- runTests tests
-    let numCorrect = numTests `minus` numFail
-    putStrLn $ "===============\n" ++ (show numCorrect) ++ " / " ++ (show numTests) ++ " tests passed"
-
-expectParse : String -> ParsedTerm -> Either String ()
-expectParse input expected =
-    case parse input of
-        Right output => output === expected
-        Left err => Left $ "Unexpected parse error: " ++ err
-
-expectParseFail : String -> Either String ()
-expectParseFail input =
-    case parse input of
-        Right output => Left $ "Unexpected successful parse: " ++ show output
-        Left err => Right ()
-
 export
 parseTests : IO ()
 parseTests = makeTest [
-    "xy" `expectParse` Variable "xy",
-    "x y" `expectParse` App (Variable "x") (Variable "y"),
-    "x y z" `expectParse` App (App (Variable "x") (Variable "y")) (Variable "z"),
-    "esdx zy zz" `expectParse` App (App (Variable "esdx") (Variable "zy")) (Variable "zz"),
-    "x (y z)" `expectParse` App (Variable "x") (App (Variable "y") (Variable "z")),
-    "x(y z)" `expectParse` App (Variable "x") (App (Variable "y") (Variable "z")),
-    "(x y) z" `expectParse` App (App (Variable "x") (Variable "y")) (Variable "z"),
-    "(x y)z" `expectParse` App (App (Variable "x") (Variable "y")) (Variable "z"),
-    "\\x.x y" `expectParse` Lambda ["x"] (App (Variable "x") (Variable "y")),
-    "\\x. x y" `expectParse` Lambda ["x"] (App (Variable "x") (Variable "y")),
-    "\\xy.x y" `expectParse` Lambda ["xy"] (App (Variable "x") (Variable "y")),
-    "\\x y.x y" `expectParse` Lambda ["x", "y"] (App (Variable "x") (Variable "y")),
-    "\\x y.x (y z)" `expectParse` Lambda ["x", "y"] (App (Variable "x") (App (Variable "y") (Variable "z"))),
-    "(\\x.x y)" `expectParse` Lambda ["x"] (App (Variable "x") (Variable "y")),
-    "(\\x.x y)(\\y.x y)" `expectParse` App (Lambda ["x"] (App (Variable "x") (Variable "y"))) (Lambda ["y"] (App (Variable "x") (Variable "y"))),
-    "\\x.\\y.x(\\z.x z) w" `expectParse`Lambda ["x"] (Lambda ["y"] (App (App (Variable "x") (Lambda ["z"] (App (Variable "x") (Variable "z")))) (Variable "w")))
+    parse "xy" ===? Variable "xy",
+    parse "x y" ===? App (Variable "x") (Variable "y"),
+    parse "x y z" ===? App (App (Variable "x") (Variable "y")) (Variable "z"),
+    parse "esdx zy zz" ===? App (App (Variable "esdx") (Variable "zy")) (Variable "zz"),
+    parse "x (y z)" ===? App (Variable "x") (App (Variable "y") (Variable "z")),
+    parse "x(y z)" ===? App (Variable "x") (App (Variable "y") (Variable "z")),
+    parse "(x y) z" ===? App (App (Variable "x") (Variable "y")) (Variable "z"),
+    parse "(x y)z" ===? App (App (Variable "x") (Variable "y")) (Variable "z"),
+    parse "\\x.x y" ===? Lambda ["x"] (App (Variable "x") (Variable "y")),
+    parse "\\x. x y" ===? Lambda ["x"] (App (Variable "x") (Variable "y")),
+    parse "\\xy.x y" ===? Lambda ["xy"] (App (Variable "x") (Variable "y")),
+    parse "\\x y.x y" ===? Lambda ["x", "y"] (App (Variable "x") (Variable "y")),
+    parse "\\x y.x (y z)" ===? Lambda ["x", "y"] (App (Variable "x") (App (Variable "y") (Variable "z"))),
+    parse "(\\x.x y)" ===? Lambda ["x"] (App (Variable "x") (Variable "y")),
+    parse "(\\x.x y)(\\y.x y)" ===? App (Lambda ["x"] (App (Variable "x") (Variable "y"))) (Lambda ["y"] (App (Variable "x") (Variable "y"))),
+    parse "\\x.\\y.x(\\z.x z) w" ===? Lambda ["x"] (Lambda ["y"] (App (App (Variable "x") (Lambda ["z"] (App (Variable "x") (Variable "z")))) (Variable "w")))
 ]

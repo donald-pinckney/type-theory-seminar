@@ -1,6 +1,6 @@
-module BetaNormalForm
+module ch1.BetaNormalForm
 
-import AST
+import ch1.AST
 
 %default total
 

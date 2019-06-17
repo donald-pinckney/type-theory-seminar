@@ -1,0 +1,9 @@
+package main
+
+pkgs = ch1, ch2, shared, baseline
+
+modules = Main
+executable = repl
+main = Main
+
+tests = Main.mainTests

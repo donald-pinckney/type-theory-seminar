@@ -1,6 +1,6 @@
-module PrettyPrint
+module ch1.PrettyPrint
 
-import AST
+import ch1.AST
 
 export
 prettyPrint : Term -> String

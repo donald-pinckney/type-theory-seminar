@@ -26,6 +26,11 @@ tpA_B__C_D___E = TArrow tpA_B (TArrow tpC_D tpE)
 tpA_B_C_D_E = TArrow tpA (TArrow tpB (TArrow tpC (TArrow tpD tpE)))
 tpA_B__C___D_E = TArrow (TArrow (TArrow tpA tpB) tpC) (TArrow tpD tpE)
 
+zero = (parse "λ f : A -> A . λ x : A . x")
+one = (parse "λ f : A -> A . λ x : A . f x")
+two = (parse "λ f : A -> A . λ x : A . f (f x)")
+add = (parse "λ m : (A -> A) -> A -> A . λ n : (A -> A) -> A -> A . λ f : A -> A . λ x : A . m f (n f x)")
+mult = (parse "λ m : (A -> A) -> A -> A . λ n : (A -> A) -> A -> A . λ f : A -> A . λ x : A . m (n f) x")
 
 spec :: Spec
 spec = do
@@ -115,11 +120,40 @@ spec = do
           -- a : A
           -- b : B
           -- f : A -> B -> C
+          -- ((\\a : A . \\b : B . \\f : A -> B -> C . (f a) b) x) y
           check [Decl "x" (TVar "A"), Decl "y" (TVar "B")] 
                 (Appl (Appl (Lambda (Decl "a" (TVar "A"))
                       (Lambda (Decl "b" (TVar "B"))
                         (Lambda (Decl "f" (TArrow (TVar "A") (TArrow (TVar "B") (TVar "C"))))
                           (Appl (Appl (Var "f") (Var "a")) (Var "b"))))) (Var "x")) (Var "y"))
           `shouldBe`
-          Right (TVar "C")
+          Right (TArrow (TArrow (TVar "A") (TArrow (TVar "B") (TVar "C"))) (TVar "C"))
 
+    describe "SimplyTyped.substitute" $ do
+        it "Lambda" $ do
+          (substitute "x" (Var "y") (Lambda (Decl "z" (TVar "A")) (Var "x")))
+          `shouldBe`
+          (Lambda (Decl "z" (TVar "A")) (Var "y"))
+
+        it "Lambda scope overwrite" $ do
+          (substitute "x" (Var "y") (Lambda (Decl "x" (TVar "A")) (Var "x")))
+          `shouldBe`
+          (Lambda (Decl "x" (TVar "A")) (Var "x"))
+
+    describe "SimplyTyped.exec" $ do
+        it "(\\x . x) y ->_\\beta y" $ do
+          (exec (parse "(λ x : A . x) y"))
+          `shouldBe`
+          (Var "y")
+        it "one + one = two" $ do
+          (exec (Appl (Appl add one) one))
+          `shouldBe`
+          two
+        it "two * two = two + two" $ do
+          (exec (Appl (Appl mult two) two))
+          `shouldBe`
+          (exec (Appl (Appl add two) two))
+        it "two * zero = zero" $ do
+          (exec (Appl (Appl mult two) zero))
+          `shouldBe`
+          zero

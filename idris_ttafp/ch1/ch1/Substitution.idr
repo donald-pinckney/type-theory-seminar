@@ -1,6 +1,6 @@
-module Substitution
+module ch1.Substitution
 
-import AST
+import ch1.AST
 
 export
 substitute : (inTerm : Term) -> (replaceVar : Variable) -> (withTerm : Term) -> Term

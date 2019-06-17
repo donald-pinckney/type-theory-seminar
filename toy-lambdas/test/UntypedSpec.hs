@@ -16,6 +16,13 @@ idy = Abst "y" y
 
 zero = parse "λ f . λ x . x"
 one = parse "λ f . λ x . (f x)"
+two = parse "λ f . λ x . f (f x)"
+add = parse "λ m . λ n . λ f . λ x . m f (n f x)"
+mult = parse "λ m . λ n . λ f . λ x . m (n f) x"
+
+add_term = Abst "m" (Abst "n" (Abst "f" (Abst "x" (
+               Appl (Appl (Var "m") (Var "f")) (Appl (Appl (Var "n") (Var "f")) (Var "x"))
+           ))))
 
 spec :: Spec
 spec = do
@@ -32,6 +39,8 @@ spec = do
             (parse "a b c d") `shouldBe` (Appl (Appl (Appl a b) c) d)
         it "abstraction should bind looser than application" $ do
             (parse "\\ x . x x x ") `shouldBe` (Abst "x" (Appl (Appl x x) x))
+        it "parsing add" $ do
+            add `shouldBe` add_term
 
     describe "Untyped.normal" $ do
         it "Vars are in normal form" $ do
@@ -58,3 +67,17 @@ spec = do
             (betaReduce (Appl idy id_id)) `shouldBe` id_id
         it "`λ x . (λ x . x) x`  should reduce to `λ x . x`" $ do
             (betaReduce (Appl x (Appl id_ x))) `shouldBe` (Appl x x)
+
+    describe "Untyped.exec" $ do
+        it "one + one = two" $ do
+            (exec (Appl (Appl add one) one))
+            `shouldBe`
+            two
+        it "two * two = two + two" $ do
+            (exec (Appl (Appl mult two) two))
+            `shouldBe`
+            (exec (Appl (Appl add two) two))
+        it "two * zero = zero" $ do
+            (exec (Appl (Appl mult two) zero))
+            `shouldBe`
+            zero

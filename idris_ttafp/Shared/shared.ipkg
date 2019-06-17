@@ -1,0 +1,13 @@
+package shared
+
+pkgs = baseline
+
+modules =
+    AbstractRepl
+    , BaselineRepl
+    , ParseUtils
+    , Result
+    , TestingSupport
+    , Tests
+
+tests = Tests.sharedTests

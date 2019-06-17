@@ -1,8 +1,8 @@
-module BetaReduction
+module ch2.BetaReduction
 
-import AST
-import Substitution
-import BetaNormalForm
+import ch2.AST
+import ch2.Substitution
+import ch2.BetaNormalForm
 
 %default total
 
@@ -19,9 +19,9 @@ betaSingleStep (App (App left_left left_right) right) =
         case betaSingleStep right of
         (Left newRight) => Left $ App (App left_left left_right) newRight
         (Right right_bnf) => Right $ BNFAppApp left_bnf right_bnf
-betaSingleStep (App (Lambda lambdaBody) right) = Left $ substitute lambdaBody (Bound 0) right
-betaSingleStep (Lambda lambdaBody) = case betaSingleStep lambdaBody of
-    (Left newBody) => Left $ Lambda newBody
+betaSingleStep (App (Lambda type lambdaBody) right) = Left $ substituteTerms lambdaBody (Bound 0) right
+betaSingleStep (Lambda type lambdaBody) = case betaSingleStep lambdaBody of
+    (Left newBody) => Left $ Lambda type newBody
     (Right body_bnf) => Right (BNFLambda body_bnf)
 
 
