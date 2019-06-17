@@ -1,9 +1,19 @@
 module ch2.AST
 
+
+public export
+FreeTermVariable : Type
+FreeTermVariable = String
+
+-- export
+-- BoundTermVariable
+
+-- implementation
+
 public export
 data TermVariable =
       Bound Nat
-    | Free String
+    | Free FreeTermVariable
 
 public export
 data TypeVariable =
