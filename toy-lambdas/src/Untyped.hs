@@ -1,10 +1,6 @@
 module Untyped
-  ( Term (..)
-  , exec
-  , pprint
-  , betaReduce
-  , normal
-  , parse
+  ( module Untyped.Semantics
+  , module Untyped.Parse
   ) where
 
 import Untyped.Semantics

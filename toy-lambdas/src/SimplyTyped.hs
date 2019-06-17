@@ -1,19 +1,9 @@
 module SimplyTyped
-    (checkContextInvariant
-    , Type (..)
-    , Decl (..)
-    , Context
-    , Term (..)
-    , parse
-    , parseType
-    , pprint
-    , pprint_
-    , pprint_tp_
-    , substitute
-    , betaReduce
-    , exec
-    , check
-    ) where
+  ( module SimplyTyped.Syntax
+  , module SimplyTyped.Print
+  , module SimplyTyped.Parse
+  , module SimplyTyped.Semantics
+  ) where
 
 import SimplyTyped.Syntax
 import SimplyTyped.Print
