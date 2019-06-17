@@ -2,8 +2,8 @@ package ch2
 
 pkgs = shared
 
-modules = AST
-    , Parse
-    , Resolve
+modules = ch2.AST
+    , ch2.Parse
+    , ch2.Resolve
 
-tests = Parse.parseTests
+tests = ch2.Parse.parseTests

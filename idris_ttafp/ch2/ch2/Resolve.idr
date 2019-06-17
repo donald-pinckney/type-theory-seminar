@@ -1,7 +1,7 @@
-module Resolve
+module ch2.Resolve
 
-import AST
-import Parse
+import ch2.AST
+import ch2.Parse
 import Debug.Error
 import Result
 

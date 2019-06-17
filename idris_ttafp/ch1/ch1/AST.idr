@@ -1,4 +1,4 @@
-module AST
+module ch1.AST
 
 public export
 data Variable =

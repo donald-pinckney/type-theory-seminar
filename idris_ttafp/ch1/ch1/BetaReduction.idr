@@ -1,8 +1,8 @@
-module BetaReduction
+module ch1.BetaReduction
 
-import AST
-import Substitution
-import BetaNormalForm
+import ch1.AST
+import ch1.Substitution
+import ch1.BetaNormalForm
 
 %default total
 

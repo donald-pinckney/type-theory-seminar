@@ -1,14 +1,28 @@
-module Parse
+module ch2.Parse
 
 import ParseUtils
 import Result
 import TestingSupport
 
 public export
+data ParsedType =
+      TypeVariable String
+    | TypeArrow ParsedType ParsedType
+
+Eq ParsedType where
+    (TypeVariable a) == (TypeVariable b) = (a == b)
+    (TypeArrow a b) == (TypeArrow c d) = (a == c) && (b == d)
+    _ == _ = False
+
+Show ParsedType where
+    show (TypeVariable a) = a
+    show (TypeArrow a b) = "(" ++ show a ++ ") -> (" ++ show b ++ ")"
+
+public export
 data ParsedTerm =
     Variable String
     | App ParsedTerm ParsedTerm
-    | Lambda (List String) ParsedTerm
+    | Lambda (List (String, ParsedType)) ParsedTerm
 
 Eq ParsedTerm where
     (Variable x) == (Variable y) = (x == y)
@@ -19,7 +33,7 @@ Eq ParsedTerm where
 Show ParsedTerm where
     show (Variable x) = x
     show (App x y) = "(" ++ (show x) ++ " " ++ (show y) ++ ")"
-    show (Lambda xs x) = "\\" ++ (unwords xs) ++ " . " ++ (show x)
+    show (Lambda xs x) = "\\" ++ (unwords $ map (\p => (fst p) ++ " : " ++ (show $ snd p)) xs) ++ " . " ++ (show x)
 
 
 ParseResultInternal : Type -> Type
@@ -38,9 +52,9 @@ isVarChar c = isAlpha c || isDigit c || (
     let n = ord c in
     (33 <= n && n <= 39)
         || (42 <= n && n <= 43)
-        || (45 == n)
         || (47 == n)
-        || (58 <= n && n <= 64)
+        || (59 <= n && n <= 61)
+        || (63 <= n && n <= 64)
         || (91 == n)
         || (93 == n)
         || (94 <= n && n <= 96)
@@ -51,13 +65,13 @@ isStartOfTerm : Char -> Bool
 isStartOfTerm c = isVarChar c || c == '(' || c == '\\'
 
 
--- *xe y zr.   ->   xe *y zr.
--- xe y *zr.   ->   xe y zr*.
+
+
 parseVar : String -> List Char -> ParseResultInternal String
 parseVar acc [] = Right (acc, [])
 parseVar acc vStr@(x :: xs) =
     if isVarChar x then
-        parseVar (acc ++ (pack [x])) xs
+        parseVar (acc ++ (singleton x)) xs
     else if isWhitespace x then
         Right (acc, xs)
     else if length acc == 0 then
@@ -65,13 +79,60 @@ parseVar acc vStr@(x :: xs) =
     else
         Right (acc, vStr)
 
--- *x y z.   ->   x y z.*
-parseLambdaVars : List Char -> ParseResultInternal (List String)
+mutual
+    parseArrowFactor : List Char -> ParseResultInternal ParsedType
+    parseArrowFactor [] = Left "Exepcted arrow type LHS to parse"
+    parseArrowFactor ('(' :: xs) = do
+        let xs = eatWhitespace xs
+        (t, xs) <- parseType xs
+        let xs = eatWhitespace xs
+        xs <- expect xs ')'
+        pure (t, xs)
+    parseArrowFactor xs = do
+        let xs = eatWhitespace xs
+        (tv, xs) <- parseVar "" xs
+        let xs = eatWhitespace xs
+        pure (TypeVariable tv, xs)
+
+    -- *a         ->    a*
+    -- *a -> b    ->    a -> b*
+    parseType : List Char -> ParseResultInternal ParsedType
+    parseType [] = Left "Expected type to parse"
+    parseType xs = do
+        let xs = eatWhitespace xs
+        (t, xs) <- parseArrowFactor xs
+        let xs = eatWhitespace xs
+        case eatAndMatch xs "->" of
+            (rest, True) => do
+                (arrowRHS, rest) <- parseType (eatWhitespace rest)
+                pure (TypeArrow t arrowRHS, rest)
+            (rest, False) => pure (t, rest)
+
+
+
+
+-- *xe:a, y : b, zr:c.   ->   xe:a, *y : b, zr:c.
+-- xe:a, y : b, *zr:c.   ->   xe:a, y : b, zr:c*.
+parseVarAndType : List Char -> ParseResultInternal (String, ParsedType)
+parseVarAndType xs = do
+    (v, xs) <- parseVar "" xs
+    let xs = eatWhitespace xs
+    xs <- expect xs ':'
+    let xs = eatWhitespace xs
+    (t, xs) <- parseType xs
+    let xs = eatWhitespace xs
+    let xs = eatOneChar xs ','
+    let xs = eatWhitespace xs
+    pure ((v, t), xs)
+
+-- *x, y, z.   ->   x, y, z.*
+parseLambdaVars : List Char -> ParseResultInternal (List (String, ParsedType))
 parseLambdaVars ('.' :: xs) = Right ([], xs)
 parseLambdaVars varsStr = do
-    (v, rest) <- parseVar "" $ unpack $ trim $ pack varsStr
-    (moreV, rest2) <- parseLambdaVars rest
-    pure (v :: moreV, rest2)
+    -- ?pouwer
+    (varAndType, rest) <- parseVarAndType $ unpack $ trim $ pack varsStr
+    (moreVarsAndTypes, rest2) <- parseLambdaVars rest
+    pure (varAndType :: moreVarsAndTypes, rest2)
 
 
 groupApps : ParsedTerm -> List ParsedTerm -> ParsedTerm
@@ -84,9 +145,9 @@ mutual
     -- But this starts with '\' already removed.
     parseLambda : List Char -> ParseResultInternal ParsedTerm
     parseLambda str = do
-        (vars, bodyStr) <- parseLambdaVars str
+        (varsAndTypes, bodyStr) <- parseLambdaVars str
         (body, rest) <- parseTerm bodyStr
-        pure (Lambda vars body, rest)
+        pure (Lambda varsAndTypes body, rest)
 
 
     parseTermSingle : List Char -> ParseResultInternal ParsedTerm
@@ -133,10 +194,12 @@ parse_unpacked str = do
 
 export
 parse : String -> Result ParsedTerm
-parse = parse_unpacked . unpack
+parse str = parse_unpacked (unpack str)
 
 
 ------------------ Tests -----------------
+
+
 
 export
 parseTests : IO ()
@@ -149,12 +212,12 @@ parseTests = makeTest [
     parse "x(y z)" ===? App (Variable "x") (App (Variable "y") (Variable "z")),
     parse "(x y) z" ===? App (App (Variable "x") (Variable "y")) (Variable "z"),
     parse "(x y)z" ===? App (App (Variable "x") (Variable "y")) (Variable "z"),
-    parse "\\x.x y" ===? Lambda ["x"] (App (Variable "x") (Variable "y")),
-    parse "\\x. x y" ===? Lambda ["x"] (App (Variable "x") (Variable "y")),
-    parse "\\xy.x y" ===? Lambda ["xy"] (App (Variable "x") (Variable "y")),
-    parse "\\x y.x y" ===? Lambda ["x", "y"] (App (Variable "x") (Variable "y")),
-    parse "\\x y.x (y z)" ===? Lambda ["x", "y"] (App (Variable "x") (App (Variable "y") (Variable "z"))),
-    parse "(\\x.x y)" ===? Lambda ["x"] (App (Variable "x") (Variable "y")),
-    parse "(\\x.x y)(\\y.x y)" ===? App (Lambda ["x"] (App (Variable "x") (Variable "y"))) (Lambda ["y"] (App (Variable "x") (Variable "y"))),
-    parse "\\x.\\y.x(\\z.x z) w" ===? Lambda ["x"] (Lambda ["y"] (App (App (Variable "x") (Lambda ["z"] (App (Variable "x") (Variable "z")))) (Variable "w")))
+    parse "\\x:a.x y" ===? Lambda [("x", TypeVariable "a")] (App (Variable "x") (Variable "y")),
+    parse "\\x : a. x y" ===? Lambda [("x", TypeVariable "a")] (App (Variable "x") (Variable "y")),
+    parse "\\xy:ab.x y" ===? Lambda [("xy", TypeVariable "ab")] (App (Variable "x") (Variable "y")),
+    parse "\\x:a,y:b .x y" ===? Lambda [("x", TypeVariable "a"), ("y", TypeVariable "b")] (App (Variable "x") (Variable "y")),
+    parse "\\x:a , y:b. x (y z)" ===? Lambda [("x", TypeVariable "a"), ("y", TypeVariable "b")] (App (Variable "x") (App (Variable "y") (Variable "z"))),
+    parse "(\\x:a.x y)" ===? Lambda [("x", TypeVariable "a")] (App (Variable "x") (Variable "y")),
+    parse "(\\x:a.x y)(\\y:b.x y)" ===? App (Lambda [("x", TypeVariable "a")] (App (Variable "x") (Variable "y"))) (Lambda [("y", TypeVariable "b")] (App (Variable "x") (Variable "y"))),
+    parse "\\x:a.\\y:b.x(\\z:c.x z) w" ===? Lambda [("x", TypeVariable "a")] (Lambda [("y", TypeVariable "b")] (App (App (Variable "x") (Lambda [("z", TypeVariable "c")] (App (Variable "x") (Variable "z")))) (Variable "w")))
 ]

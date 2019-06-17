@@ -1,4 +1,4 @@
-module AST
+module ch2.AST
 
 public export
 data TermVariable =

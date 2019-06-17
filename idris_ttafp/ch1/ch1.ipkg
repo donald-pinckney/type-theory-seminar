@@ -3,13 +3,13 @@ package ch1
 pkgs = shared
 
 modules =
-    AST
-    , BetaNormalForm
-    , BetaReduction
-    , Parse
-    , PrettyPrint
-    , ReplCh1
-    , Resolve
-    , Substitution
+    ch1.AST
+    , ch1.BetaNormalForm
+    , ch1.BetaReduction
+    , ch1.Parse
+    , ch1.PrettyPrint
+    , ch1.ReplCh1
+    , ch1.Resolve
+    , ch1.Substitution
 
-tests = Parse.parseTests
+tests = ch1.Parse.parseTests

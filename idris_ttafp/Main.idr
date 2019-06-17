@@ -1,6 +1,6 @@
 module Main
 
-import ReplCh1
+import ch1.ReplCh1
 
 main : IO ()
 main = replCh1

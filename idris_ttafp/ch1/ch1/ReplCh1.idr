@@ -1,12 +1,12 @@
-module ReplCh1
+module ch1.ReplCh1
 
 import AbstractRepl
-import AST
 import Result
-import BetaNormalForm
-import BetaReduction
-import PrettyPrint
-import Resolve
+import ch1.AST
+import ch1.BetaNormalForm
+import ch1.BetaReduction
+import ch1.PrettyPrint
+import ch1.Resolve
 
 ReplState : Type
 ReplState = ()
