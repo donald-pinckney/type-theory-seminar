@@ -2,6 +2,7 @@ module AbstractRepl
 
 import ParseUtils
 import Result
+import BaselineRepl
 
 -- First, just some random util stuff
 
@@ -63,6 +64,12 @@ parameters (supportedCommands : List (CommandBuilder stateType), ok : NonEmpty s
             MkCommandBuilder [['q'],['q','u','i','t']] (\rest => pure Command_quit) "" "Quits."
         ]
 
+    completions : List String
+    completions =
+        let commands' = map commandStrs actualSupportedCommands in
+        let commands = join commands' in
+        map (strCons ':' . pack) commands
+
 
     buildCommand : List Char -> List Char -> Result (ReplCommand stateType)
     buildCommand cmd rest =
@@ -99,4 +106,4 @@ parameters (supportedCommands : List (CommandBuilder stateType), ok : NonEmpty s
 
     export
     replMain : stateType -> IO ()
-    replMain initialState = replWith initialState "λ> " replLoopWrapped
+    replMain initialState = baselineReplWith {completions=completions} initialState "λ> " replLoopWrapped

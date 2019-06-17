@@ -1,9 +1,11 @@
 module Main
 
-import ch1.ReplCh1
+import ch1.Repl
+import ch2.Repl
+
 
 main : IO ()
-main = replCh1
+main = replCh2
 
 
 export

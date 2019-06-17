@@ -8,7 +8,7 @@ modules =
     , ch1.BetaReduction
     , ch1.Parse
     , ch1.PrettyPrint
-    , ch1.ReplCh1
+    , ch1.Repl
     , ch1.Resolve
     , ch1.Substitution
 
