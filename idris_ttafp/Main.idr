@@ -5,7 +5,7 @@ import ch2.Repl
 
 
 main : IO ()
-main = replCh2
+main = replCh1
 
 
 export

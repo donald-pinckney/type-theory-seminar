@@ -48,6 +48,21 @@ lookupWrongFreeType {gamma=MkContext (fds ** unique) bds} sigma_neq_tau keyPrf =
             let holds_later = VarFree {gamma=MkContext (fds_tail ** uniqueUnCons unique) bds} sigma_later in
             ih holds_later
 
+uniqueElemAtIdx : ElemAtIdx x xs n -> ElemAtIdx y xs n -> x = y
+uniqueValueAtKey : ValueAtKey x xs v -> ValueAtKey y xs v -> x = y
+
+uniqueType : Holds $ MkTypeJudgment gamma m sigma -> Holds $ MkTypeJudgment gamma m tau -> sigma = tau
+uniqueType (VarBound x) (VarBound y) = uniqueElemAtIdx x y
+uniqueType (VarFree x) (VarFree y) = uniqueValueAtKey x y
+uniqueType (ApplRule x z) (ApplRule y w) = case (uniqueType x y, uniqueType z w) of (Refl, Refl) => Refl
+uniqueType (AbstRule x) (AbstRule y) = case uniqueType x y of Refl => Refl
+
+leftTypeable : Holds $ MkTypeJudgment gamma (App left right) tau -> (sigma : Type' ** Holds $ MkTypeJudgment gamma left (Arrow sigma tau))
+leftTypeable (ApplRule {sigma} leftHolds rightHolds) = (sigma ** leftHolds)
+
+rightTypeable : Holds $ MkTypeJudgment gamma (App left right) tau -> (sigma : Type' ** Holds $ MkTypeJudgment gamma right sigma)
+rightTypeable (ApplRule {sigma} _ rightHolds) = (sigma ** rightHolds)
+
 
 findType : (gamma : Context) -> (term : Term) -> Dec (sigma : Type' ** Holds $ MkTypeJudgment gamma term sigma)
 findType gamma (Var (Bound n)) =
@@ -62,8 +77,19 @@ findType gamma (Var (Free v)) =
 
 findType gamma (App left right) =
     case findType gamma left of
-    (Yes prf) => ?findType_rhs_1
-    (No contra) => ?findType_rhs_4
+    (Yes (Arrow sigma tau ** leftArrow)) =>
+        case findType gamma right of
+        (Yes prf) => ?ewerqwer_1
+        (No rightNoType) => No (\(beta ** holds) =>
+            ?qwerqwer)
+
+    (Yes (VarType eta ** leftEta)) => No (\(tau ** holds) =>
+        let (sigma ** leftHolds) = leftTypeable holds in
+        case uniqueType leftEta leftHolds of Refl impossible
+        )
+    (No leftNoType) => No (\(tau ** holds) =>
+        let (sigma ** leftHolds) = leftTypeable holds in
+        leftNoType (Arrow sigma tau ** leftHolds))
 
 findType gamma (Lambda type body) = ?findType_rhs_3
 
