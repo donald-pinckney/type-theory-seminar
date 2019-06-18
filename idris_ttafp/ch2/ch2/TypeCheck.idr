@@ -7,6 +7,15 @@ import ch2.DerivationRules
 import ch2.ContextLookup
 import ElemAtIdx
 
+
+valueAtKeyImpliesElem : ValueAtKey x ps v -> FreeDeclarationListElem v ps
+valueAtKeyImpliesElem ThisKey = Here
+valueAtKeyImpliesElem (OtherKey unique tail_prf) = There (valueAtKeyImpliesElem tail_prf)
+
+uniquenessContradiction : ValueAtKey x ps v -> Not (UniqueFreeDeclarations ((v, y) :: ps))
+uniquenessContradiction = repeatNonUnique . valueAtKeyImpliesElem
+
+
 lookupWrongBoundType : Not (sigma = tau) ->
     ElemAtIdx tau (boundDecls gamma) n ->
     Not (Holds $ MkTypeJudgment gamma (Var (Bound n)) sigma)
@@ -22,6 +31,23 @@ lookupWrongBoundType {gamma=MkContext fds (eta :: bds)} sigma_neq_tau (ThereS ta
         ih holds_later
 
 
+lookupWrongFreeType : Not (sigma = tau) ->
+    ValueAtKey tau (freeDecls gamma) v ->
+    Not (Holds $ MkTypeJudgment gamma (Var (Free v)) sigma)
+lookupWrongFreeType {gamma=MkContext (fds ** unique) bds} sigma_neq_tau keyPrf = \holds =>
+    case keyPrf of
+    ThisKey =>
+        case holds of
+        (VarFree ThisKey) => sigma_neq_tau Refl
+        (VarFree (OtherKey alsoUnique keyPrf_sigma)) => uniquenessContradiction keyPrf_sigma unique
+
+    (OtherKey {p=hd} {xs=fds_tail} _ tail_key) =>
+        let ih = lookupWrongFreeType {gamma=MkContext (fds_tail ** uniqueUnCons unique) bds} sigma_neq_tau tail_key in
+        case holds of
+        (VarFree (OtherKey _ sigma_later)) =>
+            let holds_later = VarFree {gamma=MkContext (fds_tail ** uniqueUnCons unique) bds} sigma_later in
+            ih holds_later
+
 
 checkTypeJudgment : (j : TypeJudgment) -> Dec (Holds j)
 checkTypeJudgment (MkTypeJudgment gamma (Var (Bound n)) sigma) =
@@ -32,6 +58,13 @@ checkTypeJudgment (MkTypeJudgment gamma (Var (Bound n)) sigma) =
         (No sigma_neq_tau) => No $ lookupWrongBoundType sigma_neq_tau elemPrf
     (No outOfBounds) => No $ (\holds => case holds of (VarBound elemIdx) => outOfBounds (sigma ** elemIdx))
 
-checkTypeJudgment (MkTypeJudgment gamma (Var (Free x)) sigma) = ?checkTypeJudgment_rhs_5
+checkTypeJudgment (MkTypeJudgment gamma (Var (Free v)) sigma) =
+    case contextLookupFreeDecl gamma v of
+    (Yes (tau ** keyPrf)) =>
+        case decEq sigma tau of
+            (Yes Refl) => Yes $ VarFree keyPrf
+            (No sigma_neq_tau) => No $ lookupWrongFreeType sigma_neq_tau keyPrf
+    (No noKey) => No $ (\holds => case holds of (VarFree keyPrf) => noKey (sigma ** keyPrf))
+
 checkTypeJudgment (MkTypeJudgment gamma (App left right) sigma) = ?checkTypeJudgment_rhs_3
 checkTypeJudgment (MkTypeJudgment gamma (Lambda bindType body) sigma) = ?checkTypeJudgment_rhs_4

@@ -55,6 +55,7 @@ implementation Uninhabited (FreeDeclarationListElem v []) where
   uninhabited Here impossible
   uninhabited (There _) impossible
 
+export
 implementation Uninhabited (UniqueFreeDeclarations ((v, a) :: (v, b) :: rest)) where
   uninhabited (ConsValid not_elem x) = not_elem Here
 
@@ -75,6 +76,7 @@ isContextListElem v ((w, t) :: xs) = case decEq v w of
             )
 
 
+export
 repeatNonUnique : FreeDeclarationListElem v xs -> Not (UniqueFreeDeclarations ((v, t) :: xs))
 repeatNonUnique {xs = ((v, t) :: ys)} Here unique = absurd unique
 repeatNonUnique {xs = (w :: ys)} (There later) (ConsValid not_elem unique) = not_elem (There later)
