@@ -10,12 +10,6 @@ public export
 BoundDeclaration : Type
 BoundDeclaration = Type'
 
-public export
-record Statement where
-    constructor MkStatement
-    term : Term
-    type : Type'
-
 
 -- Forward declaration because of bug in totality checker with mutual blocks.
 -- See https://github.com/idris-lang/Idris-dev/issues/4436
@@ -36,15 +30,21 @@ data FreeDeclarationListElem : FreeTermVariable -> List FreeDeclaration -> Type 
 public export
 record Context where
     constructor MkContext
-    freeDeclarations : (freeDecls : List FreeDeclaration ** UniqueFreeDeclarations freeDecls)
+    uniqueFreeDecls : (decls : List FreeDeclaration ** UniqueFreeDeclarations decls)
     boundDecls : List BoundDeclaration -- This is a stack, head being the top
 
-public export
-record Judgment where
-    constructor MkJudgment
-    context : Context
-    statement : Statement
+export
+freeDecls : Context -> List FreeDeclaration
+freeDecls (MkContext (x ** pf) boundDecls) = x
 
+export
+push : BoundDeclaration -> Context -> Context
+push d (MkContext freeDecls boundDecls) = MkContext freeDecls (d :: boundDecls)
+
+export
+data ValueAtKey : Type' -> (xs : List FreeDeclaration) -> FreeTermVariable -> Type where
+    ThisKey : ValueAtKey x ((k, x) :: xs) k
+    OtherKey : UniqueFreeDeclarations (p :: xs) -> ValueAtKey x xs k -> ValueAtKey x (p :: xs) k
 
 implementation Uninhabited (FreeDeclarationListElem v []) where
   uninhabited Here impossible
