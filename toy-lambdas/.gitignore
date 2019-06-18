@@ -1,3 +1,4 @@
 .stack-work/
 toy-lambdas.cabal
+stack.yaml.lock
 *~
