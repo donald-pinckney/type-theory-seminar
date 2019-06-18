@@ -1,4 +1,4 @@
-module DependentlyTyped
+module DependentlyTyped.Syntax
   ( checkContextInvariant
   , Type (..)
   , Decl (..)
@@ -22,6 +22,7 @@ data Type = TConstr TypeConstr
 data TypeConstr = TVar String
                 | TArrow TypeConstr TypeConstr
                 | Pi Decl TypeConstr
+                deriving (Show, Eq)
 
 data SuperType = S
                | SArrow SuperType SuperType
