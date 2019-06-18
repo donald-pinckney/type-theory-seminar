@@ -1,4 +1,4 @@
-module Untyped.Semantics
+module Untyped.Untyped
   ( Term (..)
   , exec
   , betaReduce

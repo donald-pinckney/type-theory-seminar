@@ -5,7 +5,7 @@ module SimplyTyped.Parse
 
 import Text.ParserCombinators.ReadP
 import Control.Applicative
-import SimplyTyped.Syntax
+import SimplyTyped.SimplyTyped
 
 {- Parsing -}
 

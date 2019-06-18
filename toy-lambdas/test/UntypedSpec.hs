@@ -1,7 +1,7 @@
 module UntypedSpec where
 
 import Test.Hspec
-import Untyped.Semantics
+import Untyped.Untyped
 import Untyped.Parse
 
 

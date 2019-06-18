@@ -1,9 +1,9 @@
-module SimplyTyped.Syntax
-  ( Term (..)
+module DependentlyTyped
+  ( checkContextInvariant
   , Type (..)
   , Decl (..)
   , Context
-  , checkContextInvariant
+  , Term (..)
   , ctxDomain
   , ctxLookup
   , ctxInsert
@@ -12,16 +12,25 @@ module SimplyTyped.Syntax
 import Data.Set (Set, notMember, insert, empty, singleton, union)
 import Data.Map.Strict (Map)
 import Data.List (sort)
+import Control.Applicative
 
-
-data Type = TVar String
-          | TArrow Type Type
-          | Unknown
+data Type = TConstr TypeConstr
+          | SType SuperType
+          | SSType
           deriving (Show, Eq)
+
+data TypeConstr = TVar String
+                | TArrow TypeConstr TypeConstr
+                | Pi Decl TypeConstr
+
+data SuperType = S
+               | SArrow SuperType SuperType
+               deriving (Show, Eq)
 
 data Term = Var String
           | Lambda Decl Term
           | Appl Term Term
+          | TTerm Type
           deriving (Show, Eq)
 
 -- | A @Decl@ (or _declaration_) is a statement with a variable as subject. A
@@ -42,20 +51,8 @@ ctxCompare (x : y : cs)
   | otherwise = ctxCompare (y : cs)
 ctxCompare _ = True
 
-
 ctxDomain :: Context -> [String]
 ctxDomain = map name
-
--- | Recursively get all type variable names from a term
-termToTVars :: Term -> Set String
-termToTVars (Var x)               = Data.Set.empty
-termToTVars (Lambda (Decl v t) b) = union (typeToTVars t) (termToTVars b)
-termToTVars (Appl l r)            = union (termToTVars l) (termToTVars r)
-
--- | Recursively get all type variable names from a type
-typeToTVars :: Type -> Set String
-typeToTVars (TVar x)     = singleton x
-typeToTVars (TArrow l r) = union (typeToTVars l) (typeToTVars r)
 
 -- | Lookup a type associated with a variable in a @Context@
 ctxLookup :: Context -> String -> Maybe Type

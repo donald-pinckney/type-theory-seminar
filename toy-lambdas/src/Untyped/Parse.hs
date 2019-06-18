@@ -3,7 +3,7 @@ module Untyped.Parse
   ) where
 
 import Text.ParserCombinators.ReadP
-import Untyped.Semantics
+import Untyped.Untyped
 import Control.Applicative
 
 
