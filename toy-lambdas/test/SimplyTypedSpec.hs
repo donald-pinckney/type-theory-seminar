@@ -1,7 +1,9 @@
 module SimplyTypedSpec where
 
 import Test.Hspec
-import SimplyTyped
+import SimplyTyped.Semantics
+import SimplyTyped.Syntax
+import SimplyTyped.Parse
 import Data.Either (isLeft)
 
 c1 = [Decl "a" (TVar "A"), Decl "b" (TVar "B")]

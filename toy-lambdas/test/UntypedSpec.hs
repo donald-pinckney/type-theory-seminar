@@ -1,7 +1,8 @@
 module UntypedSpec where
 
 import Test.Hspec
-import Untyped
+import Untyped.Semantics
+import Untyped.Parse
 
 
 x = Var "x"
