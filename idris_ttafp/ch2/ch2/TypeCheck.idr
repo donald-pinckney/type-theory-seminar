@@ -49,7 +49,14 @@ lookupWrongFreeType {gamma=MkContext (fds ** unique) bds} sigma_neq_tau keyPrf =
             ih holds_later
 
 uniqueElemAtIdx : ElemAtIdx x xs n -> ElemAtIdx y xs n -> x = y
+uniqueElemAtIdx HereZ HereZ = Refl
+uniqueElemAtIdx (ThereS later_x) (ThereS later_y) = uniqueElemAtIdx later_x later_y
+
 uniqueValueAtKey : ValueAtKey x xs v -> ValueAtKey y xs v -> x = y
+uniqueValueAtKey ThisKey ThisKey = Refl
+uniqueValueAtKey {x} ThisKey (OtherKey unique keyPrf) = void $ (uniquenessContradiction {y=x} keyPrf) unique
+uniqueValueAtKey {y} (OtherKey unique keyPrf) ThisKey = void $ (uniquenessContradiction {y=y} keyPrf) unique
+uniqueValueAtKey (OtherKey uniqueLeft keyPrfLeft) (OtherKey uniqueRight keyPrfRight) = uniqueValueAtKey keyPrfLeft keyPrfRight
 
 uniqueType : Holds $ MkTypeJudgment gamma m sigma -> Holds $ MkTypeJudgment gamma m tau -> sigma = tau
 uniqueType (VarBound x) (VarBound y) = uniqueElemAtIdx x y
@@ -79,9 +86,16 @@ findType gamma (App left right) =
     case findType gamma left of
     (Yes (Arrow sigma tau ** leftArrow)) =>
         case findType gamma right of
-        (Yes prf) => ?ewerqwer_1
-        (No rightNoType) => No (\(beta ** holds) =>
-            ?qwerqwer)
+        (Yes (eta ** rightEta)) =>
+            case decEq eta sigma of
+            (Yes Refl) => Yes (tau ** ApplRule leftArrow rightEta)
+            (No eta_neq_sigma) => No (\(beta ** holds) =>
+                case holds of
+                (ApplRule {sigma=leftType} leftArrow' rightHolds') =>
+                    let eta_leftType = uniqueType rightHolds' rightEta in
+                    let left_arrows_eq = uniqueType leftArrow leftArrow' in
+                    case left_arrows_eq of Refl => eta_neq_sigma (sym eta_leftType))
+        (No rightNoType) => No (\(beta ** holds) => rightNoType $ rightTypeable holds)
 
     (Yes (VarType eta ** leftEta)) => No (\(tau ** holds) =>
         let (sigma ** leftHolds) = leftTypeable holds in
@@ -91,25 +105,18 @@ findType gamma (App left right) =
         let (sigma ** leftHolds) = leftTypeable holds in
         leftNoType (Arrow sigma tau ** leftHolds))
 
-findType gamma (Lambda type body) = ?findType_rhs_3
+findType gamma (Lambda sigma body) =
+    case findType (push sigma gamma) body of
+    (Yes (tau ** body_tau)) => Yes $ (Arrow sigma tau ** AbstRule body_tau)
+    (No contra) => No (\(eta ** holds) =>
+        case holds of (AbstRule {sigma} {tau} bodyHolds) => contra (tau ** bodyHolds))
 
 
 checkTypeJudgment : (j : TypeJudgment) -> Dec (Holds j)
-checkTypeJudgment (MkTypeJudgment gamma (Var (Bound n)) sigma) =
-    case contextLookupBoundDecl gamma n of
-    (Yes (tau ** elemPrf)) =>
-        case decEq sigma tau of
-        (Yes Refl) => Yes $ VarBound elemPrf
-        (No sigma_neq_tau) => No $ lookupWrongBoundType sigma_neq_tau elemPrf
-    (No outOfBounds) => No $ (\holds => case holds of (VarBound elemIdx) => outOfBounds (sigma ** elemIdx))
-
-checkTypeJudgment (MkTypeJudgment gamma (Var (Free v)) sigma) =
-    case contextLookupFreeDecl gamma v of
-    (Yes (tau ** keyPrf)) =>
-        case decEq sigma tau of
-            (Yes Refl) => Yes $ VarFree keyPrf
-            (No sigma_neq_tau) => No $ lookupWrongFreeType sigma_neq_tau keyPrf
-    (No noKey) => No $ (\holds => case holds of (VarFree keyPrf) => noKey (sigma ** keyPrf))
-
-checkTypeJudgment (MkTypeJudgment gamma (App left right) tau) = ?checkTypeJudgment_rhs_3
-checkTypeJudgment (MkTypeJudgment gamma (Lambda bindType body) sigma) = ?checkTypeJudgment_rhs_4
+checkTypeJudgment (MkTypeJudgment gamma term sigma) =
+    case findType gamma term of
+    (Yes (sigma' ** holds')) =>
+        case decEq sigma sigma' of
+        (Yes Refl) => Yes holds'
+        (No contra) => No (\holds => contra $ uniqueType holds holds')
+    (No contra) => No (\holds => contra $ (sigma ** holds))
