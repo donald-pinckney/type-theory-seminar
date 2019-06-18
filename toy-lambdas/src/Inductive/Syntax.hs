@@ -1,0 +1,4 @@
+module Inductive.Syntax
+  (
+  ) where
+
