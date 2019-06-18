@@ -49,6 +49,25 @@ lookupWrongFreeType {gamma=MkContext (fds ** unique) bds} sigma_neq_tau keyPrf =
             ih holds_later
 
 
+findType : (gamma : Context) -> (term : Term) -> Dec (sigma : Type' ** Holds $ MkTypeJudgment gamma term sigma)
+findType gamma (Var (Bound n)) =
+    case contextLookupBoundDecl gamma n of
+    (Yes (sigma ** elemPrf)) => Yes (sigma ** VarBound elemPrf)
+    (No outOfBounds) => No $ (\holds => case holds of (sigma ** VarBound elemIdx) => outOfBounds (sigma ** elemIdx))
+
+findType gamma (Var (Free v)) =
+    case contextLookupFreeDecl gamma v of
+    (Yes (sigma ** elemPrf)) => Yes (sigma ** VarFree elemPrf)
+    (No outOfBounds) => No $ (\holds => case holds of (sigma ** VarFree elemIdx) => outOfBounds (sigma ** elemIdx))
+
+findType gamma (App left right) =
+    case findType gamma left of
+    (Yes prf) => ?findType_rhs_1
+    (No contra) => ?findType_rhs_4
+
+findType gamma (Lambda type body) = ?findType_rhs_3
+
+
 checkTypeJudgment : (j : TypeJudgment) -> Dec (Holds j)
 checkTypeJudgment (MkTypeJudgment gamma (Var (Bound n)) sigma) =
     case contextLookupBoundDecl gamma n of
@@ -66,5 +85,5 @@ checkTypeJudgment (MkTypeJudgment gamma (Var (Free v)) sigma) =
             (No sigma_neq_tau) => No $ lookupWrongFreeType sigma_neq_tau keyPrf
     (No noKey) => No $ (\holds => case holds of (VarFree keyPrf) => noKey (sigma ** keyPrf))
 
-checkTypeJudgment (MkTypeJudgment gamma (App left right) sigma) = ?checkTypeJudgment_rhs_3
+checkTypeJudgment (MkTypeJudgment gamma (App left right) tau) = ?checkTypeJudgment_rhs_3
 checkTypeJudgment (MkTypeJudgment gamma (Lambda bindType body) sigma) = ?checkTypeJudgment_rhs_4
