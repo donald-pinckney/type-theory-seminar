@@ -2,6 +2,8 @@ module ch1.PrettyPrint
 
 import ch1.AST
 
+%default total
+
 export
 prettyPrint : Term -> String
 prettyPrint (Var (Bound k)) = show k

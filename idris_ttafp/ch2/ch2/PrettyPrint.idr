@@ -2,6 +2,8 @@ module ch2.PrettyPrint
 
 import ch2.AST
 
+%default total
+
 export
 prettyPrintType : Type' -> String
 prettyPrintType (VarType (FreeType v)) = v

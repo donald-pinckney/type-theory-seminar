@@ -2,6 +2,8 @@ module ch1.Substitution
 
 import ch1.AST
 
+%default total
+
 export
 substitute : (inTerm : Term) -> (replaceVar : Variable) -> (withTerm : Term) -> Term
 substitute inTerm@(Var (Bound k)) (Bound j) withTerm = case decEq k j of

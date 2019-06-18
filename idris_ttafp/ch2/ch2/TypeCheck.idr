@@ -7,6 +7,7 @@ import ch2.DerivationRules
 import ch2.ContextLookup
 import ElemAtIdx
 
+%default total
 
 valueAtKeyImpliesElem : ValueAtKey x ps v -> FreeDeclarationListElem v ps
 valueAtKeyImpliesElem ThisKey = Here
@@ -34,7 +35,7 @@ lookupWrongBoundType {gamma=MkContext fds (eta :: bds)} sigma_neq_tau (ThereS ta
 lookupWrongFreeType : Not (sigma = tau) ->
     ValueAtKey tau (freeDecls gamma) v ->
     Not (Holds $ MkTypeJudgment gamma (Var (Free v)) sigma)
-lookupWrongFreeType {gamma=MkContext (fds ** unique) bds} sigma_neq_tau keyPrf = \holds =>
+lookupWrongFreeType {sigma} {gamma=MkContext (fds ** unique) bds} sigma_neq_tau keyPrf = \holds =>
     case keyPrf of
     ThisKey =>
         case holds of
@@ -47,6 +48,7 @@ lookupWrongFreeType {gamma=MkContext (fds ** unique) bds} sigma_neq_tau keyPrf =
         (VarFree (OtherKey _ sigma_later)) =>
             let holds_later = VarFree {gamma=MkContext (fds_tail ** uniqueUnCons unique) bds} sigma_later in
             ih holds_later
+        (VarFree ThisKey) =>(uniquenessContradiction {y=sigma} tail_key) unique
 
 uniqueElemAtIdx : ElemAtIdx x xs n -> ElemAtIdx y xs n -> x = y
 uniqueElemAtIdx HereZ HereZ = Refl

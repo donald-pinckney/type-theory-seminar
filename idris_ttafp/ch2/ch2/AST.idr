@@ -1,5 +1,6 @@
 module ch2.AST
 
+%default total
 
 public export
 FreeTermVariable : Type

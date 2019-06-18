@@ -5,6 +5,8 @@ import ch2.Judgments
 import ch2.AST
 import ElemAtIdx
 
+%default total
+
 public export
 data Holds : TypeJudgment -> Type where
     VarBound : ElemAtIdx sigma (boundDecls gamma) n ->

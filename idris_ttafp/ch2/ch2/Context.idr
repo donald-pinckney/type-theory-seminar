@@ -2,6 +2,8 @@ module ch2.Context
 
 import ch2.AST
 
+%default total
+
 public export
 FreeDeclaration : Type
 FreeDeclaration = (FreeTermVariable, Type')
