@@ -30,7 +30,7 @@ checkTypeJudgment (MkTypeJudgment gamma (Var (Bound n)) sigma) =
         case decEq sigma tau of
         (Yes Refl) => Yes $ VarBound elemPrf
         (No sigma_neq_tau) => No $ lookupWrongBoundType sigma_neq_tau elemPrf
-    (No outOfBounds) => ?checkTypeJudgment_rhs_6
+    (No outOfBounds) => No $ (\holds => case holds of (VarBound elemIdx) => outOfBounds (sigma ** elemIdx))
 
 checkTypeJudgment (MkTypeJudgment gamma (Var (Free x)) sigma) = ?checkTypeJudgment_rhs_5
 checkTypeJudgment (MkTypeJudgment gamma (App left right) sigma) = ?checkTypeJudgment_rhs_3
