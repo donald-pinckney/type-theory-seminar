@@ -1,8 +1,7 @@
 module SimplyTypedSpec where
 
 import Test.Hspec
-import SimplyTyped.Semantics
-import SimplyTyped.Syntax
+import SimplyTyped.SimplyTyped
 import SimplyTyped.Parse
 import Data.Either (isLeft)
 

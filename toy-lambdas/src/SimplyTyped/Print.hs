@@ -4,7 +4,7 @@ module SimplyTyped.Print
   , pprint_tp_
   ) where
 
-import SimplyTyped.Syntax
+import SimplyTyped.SimplyTyped
 
 
 {- Printing -}

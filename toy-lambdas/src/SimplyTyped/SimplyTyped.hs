@@ -1,14 +1,43 @@
-module SimplyTyped.Semantics
+module SimplyTyped.SimplyTyped
   ( substitute
   , betaReduce
   , normal
   , exec
   , check
+  , Term (..)
+  , Type (..)
+  , Decl (..)
+  , Context
+  , checkContextInvariant
+  , ctxDomain
+  , ctxLookup
+  , ctxInsert
   ) where
 
-import SimplyTyped.Syntax
-import SimplyTyped.Print
+import Data.Set (Set, notMember, insert, empty, singleton, union)
+import Data.Map.Strict (Map)
+import Data.List (sort)
 
+{- Syntax -}
+
+data Type = TVar String
+          | TArrow Type Type
+          | Unknown
+          deriving (Show, Eq)
+
+data Term = Var String
+          | Lambda Decl Term
+          | Appl Term Term
+          deriving (Show, Eq)
+
+-- | A @Decl@ (or _declaration_) is a statement with a variable as subject. A
+-- _statement_ is of the form M : T, where M is a Term and T is a type
+data Decl = Decl { name :: String, tp :: Type }
+            deriving (Show, Eq)
+
+-- | A @Context@ is a list of declarations with _different_ subjects. This isn't
+-- enforced here, but instead should be enforced by an API
+type Context = [Decl]
 
 {- Semantics -}
 
@@ -35,9 +64,9 @@ betaReduce (Appl l r) =
             _ -> if not (normal l) then Appl (betaReduce l) r
                                    else if not (normal r)
                                          then Appl l (betaReduce r)
-                                         else error $ (pprint_ (Appl l r)) ++ " is in normal form"
-betaReduce x = if normal x then error $ (pprint_ x) ++ " is in normal form"
-                           else error $ (pprint_ x) ++ " is not in normal form but no reduction exists"
+                                         else error $ (show (Appl l r)) ++ " is in normal form"
+betaReduce x = if normal x then error $ (show x) ++ " is in normal form"
+                           else error $ (show x) ++ " is not in normal form but no reduction exists"
 
 -- | Test if a term is normal
 normal :: Term -> Bool
@@ -68,3 +97,37 @@ check ctx (Appl fn arg)      =
                                           | otherwise -> Left "Function types must be arrow types"
     (Left m, _) -> Left m
     (_, Left m) -> Left m
+
+
+checkContextInvariant :: Context -> Bool
+checkContextInvariant = ctxCompare . sort . ctxDomain
+
+ctxCompare :: [String] -> Bool
+ctxCompare (x : y : cs)
+  | x == y = False
+  | otherwise = ctxCompare (y : cs)
+ctxCompare _ = True
+
+
+ctxDomain :: Context -> [String]
+ctxDomain = map name
+
+-- | Recursively get all type variable names from a term
+termToTVars :: Term -> Set String
+termToTVars (Var x)               = Data.Set.empty
+termToTVars (Lambda (Decl v t) b) = union (typeToTVars t) (termToTVars b)
+termToTVars (Appl l r)            = union (termToTVars l) (termToTVars r)
+
+-- | Recursively get all type variable names from a type
+typeToTVars :: Type -> Set String
+typeToTVars (TVar x)     = singleton x
+typeToTVars (TArrow l r) = union (typeToTVars l) (typeToTVars r)
+
+-- | Lookup a type associated with a variable in a @Context@
+ctxLookup :: Context -> String -> Maybe Type
+ctxLookup []   name = Nothing
+ctxLookup ((Decl x tp):ds) name = if x == name then Just tp else ctxLookup ds name
+
+ctxInsert :: Context -> Decl -> Context
+ctxInsert [] decl = return decl
+ctxInsert (d:ds) decl = if (name d) == (name decl) then decl:ds else d : (ctxInsert ds decl)
