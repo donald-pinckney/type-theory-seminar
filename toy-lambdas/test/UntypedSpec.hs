@@ -3,6 +3,7 @@ module UntypedSpec where
 import Test.Hspec
 import Untyped
 
+
 x = Var "x"
 y = Var "y"
 z = Var "z"

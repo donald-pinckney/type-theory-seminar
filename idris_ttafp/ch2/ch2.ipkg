@@ -5,10 +5,15 @@ pkgs = shared
 modules = ch2.AST
     , ch2.BetaNormalForm
     , ch2.BetaReduction
+    , ch2.Context
+    , ch2.ContextLookup
+    , ch2.DerivationRules
+    , ch2.Judgments
     , ch2.Parse
     , ch2.PrettyPrint
     , ch2.Repl
     , ch2.Resolve
     , ch2.Substitution
+    , ch2.TypeCheck
 
 tests = ch2.Parse.parseTests

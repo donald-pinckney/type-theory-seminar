@@ -5,6 +5,7 @@ pkgs = baseline
 modules =
     AbstractRepl
     , BaselineRepl
+    , ElemAtIdx
     , ParseUtils
     , Result
     , TestingSupport
