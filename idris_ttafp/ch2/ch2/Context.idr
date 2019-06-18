@@ -33,7 +33,7 @@ record Context where
     uniqueFreeDecls : (decls : List FreeDeclaration ** UniqueFreeDeclarations decls)
     boundDecls : List BoundDeclaration -- This is a stack, head being the top
 
-export
+public export
 freeDecls : Context -> List FreeDeclaration
 freeDecls (MkContext (x ** pf) boundDecls) = x
 
@@ -41,10 +41,15 @@ export
 push : BoundDeclaration -> Context -> Context
 push d (MkContext freeDecls boundDecls) = MkContext freeDecls (d :: boundDecls)
 
-export
+public export
 data ValueAtKey : Type' -> (xs : List FreeDeclaration) -> FreeTermVariable -> Type where
     ThisKey : ValueAtKey x ((k, x) :: xs) k
     OtherKey : UniqueFreeDeclarations (p :: xs) -> ValueAtKey x xs k -> ValueAtKey x (p :: xs) k
+
+export
+unOtherKey : ValueAtKey x ((w, y) :: ps) v -> Not (v = w) -> ValueAtKey x ps v
+unOtherKey ThisKey v_neq_w = void $ v_neq_w Refl
+unOtherKey (OtherKey unique other) v_neq_w = other
 
 implementation Uninhabited (FreeDeclarationListElem v []) where
   uninhabited Here impossible
@@ -52,6 +57,11 @@ implementation Uninhabited (FreeDeclarationListElem v []) where
 
 implementation Uninhabited (UniqueFreeDeclarations ((v, a) :: (v, b) :: rest)) where
   uninhabited (ConsValid not_elem x) = not_elem Here
+
+export
+implementation Uninhabited (ValueAtKey x [] k) where
+  uninhabited ThisKey impossible
+  uninhabited (OtherKey _ _) impossible
 
 isContextListElem : (v : FreeTermVariable) -> (decls : List FreeDeclaration) -> Dec (FreeDeclarationListElem v decls)
 isContextListElem v [] = No uninhabited
@@ -72,6 +82,11 @@ repeatNonUnique {xs = (w :: ys)} (There later) (ConsValid not_elem unique) = not
 nonUniqueCons : Not (UniqueFreeDeclarations xs) -> Not (UniqueFreeDeclarations (d :: xs))
 nonUniqueCons same_tail unique = case unique of
     (ConsValid f unique_tail) => same_tail unique_tail
+
+export
+uniqueUnCons : UniqueFreeDeclarations (x :: xs) -> UniqueFreeDeclarations xs
+uniqueUnCons (ConsValid f x) = x
+
 
 isUniqueFreeDeclarations : (decls : List FreeDeclaration) -> Dec (UniqueFreeDeclarations decls)
 isUniqueFreeDeclarations [] = Yes NilValid

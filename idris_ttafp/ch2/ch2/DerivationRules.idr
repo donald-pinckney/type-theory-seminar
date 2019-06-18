@@ -5,6 +5,7 @@ import ch2.Judgments
 import ch2.AST
 import ElemIdx
 
+export
 data Holds : TypeJudgment -> Type where
     VarBound : ElemIdx sigma (boundDecls gamma) n ->
         Holds $ MkTypeJudgment gamma (Var (Bound n)) sigma
