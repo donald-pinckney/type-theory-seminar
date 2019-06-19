@@ -32,7 +32,7 @@ Meeting times are yet to be determined.
 
 ## Status of Projects
 
-### Idris (branch `idris-impl`)
+### Idris (branch `idris-impl`, led by Donald)
 
 Roughly, the goal for now is to loosely follow the book by implementing the discussed variants of lambda calculus. Since it is in Idris, we can also give proofs of some of the theorems in the book, with respect to our implementation. Roughly my attitude is to prove what I want / what is fun, but don't get too caught up on the proofs.
 
@@ -53,6 +53,6 @@ Roughly, the goal for now is to loosely follow the book by implementing the disc
 
 People can work on theorem proving about stuff in say chapter 2, while concurrently other people work on stuff for future chapters. Just see what is most interesting to you to implement or prove.
 
-### Haskell (branch `hs`)
+### Haskell (branch `hs`, led by Ben / Aron)
 
-### Haskell Inductive (branch `hs-inductive`)
+### Haskell Inductive (branch `hs-inductive`, led by Ben / Aron)
