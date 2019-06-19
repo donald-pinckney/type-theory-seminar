@@ -1,6 +1,10 @@
 module ch2.Substitution
 
 import ch2.AST
+import ch2.Context
+import ch2.ContextLookup
+import ch2.Judgments
+import ch2.DerivationRules
 
 %default total
 
@@ -18,3 +22,7 @@ substituteTerms inTerm@(Var (Free x)) (Free y) withTerm = case decEq x y of
 substituteTerms (App x y) replaceVar withTerm = App (substituteTerms x replaceVar withTerm) (substituteTerms y replaceVar withTerm)
 substituteTerms (Lambda type lambdaBody) (Bound k) withTerm = Lambda type (substituteTerms lambdaBody (Bound (S k)) withTerm)
 substituteTerms (Lambda type lambdaBody) (Free y) withTerm = Lambda type (substituteTerms lambdaBody (Free y) withTerm)
+
+
+-- substitutionLemmaBound : (inTerm : Term) -> (replaceBound : Nat) -> (withTerm : Term) ->
+--     Holds $ MkTypeJudgment

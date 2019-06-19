@@ -7,6 +7,7 @@ import ch2.BetaNormalForm
 import ch2.BetaReduction
 import ch2.PrettyPrint
 import ch2.Resolve
+import ch2.Context
 
 ReplState : Type
 ReplState = ()
@@ -15,14 +16,14 @@ Command_isBNF : Term -> ReplCommand ReplState
 Command_isBNF term state = success $ Just (show $ decAsBool $ isInBNF term, state)
 
 Command_multiStep : Term -> ReplCommand ReplState
-Command_multiStep term state =
-    let (newTerm ** bnf) = betaMultiStep term in
-    success $ Just (prettyPrintTerm newTerm, state)
+-- Command_multiStep term state =
+--     let (newTerm ** bnf) = betaMultiStep term in
+--     success $ Just (prettyPrintTerm newTerm, state)
 
 Command_singleStep : Term -> ReplCommand ReplState
-Command_singleStep term state = case betaSingleStep term of
-    (Left newTerm) => success $ Just (prettyPrintTerm newTerm, state)
-    (Right bnf) => success $ Just ("Term already in BNF", state)
+-- Command_singleStep term state = case betaSingleStep term of
+--     (Left newTerm) => success $ Just (prettyPrintTerm newTerm, state)
+--     (Right bnf) => success $ Just ("Term already in BNF", state)
 
 
 -- total
