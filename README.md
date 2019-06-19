@@ -51,7 +51,7 @@ Roughly, the goal for now is to loosely follow the book by implementing the disc
 
 #### How to help
 
-People can work on theorem proving about stuff in say chapter 2, while concurrently other people work on stuff for future chapters. Just see what is most interesting to you to implement or prove.
+People can work on theorem proving about stuff in say chapter 2, while concurrently other people work on stuff for future chapters. Just see what is most interesting to you to implement or prove. People can also go back and give proofs of things that were left unproved, such as Church Rosser theorem, etc.
 
 ### Haskell (branch `hs`, led by Ben / Aron)
 
