@@ -24,5 +24,8 @@ substituteTerms (Lambda type lambdaBody) (Bound k) withTerm = Lambda type (subst
 substituteTerms (Lambda type lambdaBody) (Free y) withTerm = Lambda type (substituteTerms lambdaBody (Free y) withTerm)
 
 
--- substitutionLemmaBound : (inTerm : Term) -> (replaceBound : Nat) -> (withTerm : Term) ->
---     Holds $ MkTypeJudgment
+export
+substitutionLemmaBound : Holds $ MkTypeJudgment (push bindType gamma) lambdaBody finalT ->
+    Holds $ MkTypeJudgment gamma right bindType ->
+    Holds $ MkTypeJudgment gamma (substituteTerms lambdaBody (Bound 0) right) finalT
+substitutionLemmaBound x y = ?substitutionLemmaBound_rhs

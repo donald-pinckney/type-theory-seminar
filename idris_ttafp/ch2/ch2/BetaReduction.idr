@@ -24,8 +24,8 @@ betaSingleStep {gamma} {sigma = finalT} (App (App left_left left_right) right) (
         (Left (newRight ** newRight_t)) => Left (App (App left_left left_right) newRight ** ApplRule left_arr newRight_t)
         (Right right_bnf) => Right $ BNFAppApp left_bnf right_bnf
 
-betaSingleStep {gamma = gamma} {sigma=finalT} (App (Lambda bindType lambdaBody) right) (ApplRule (AbstRule x) right_t) = --?qwerqwer_2
-    Left (substituteTerms lambdaBody (Bound 0) right ** ?eqwer)
+betaSingleStep {gamma = gamma} {sigma=finalT} (App (Lambda bindType lambdaBody) right) (ApplRule (AbstRule body_t) right_t) = --?qwerqwer_2
+    Left (substituteTerms lambdaBody (Bound 0) right ** substitutionLemmaBound body_t right_t)
 
 betaSingleStep {gamma} {sigma = (Arrow bindType tau)} (Lambda bindType lambdaBody) (AbstRule body_tau) =
     case betaSingleStep lambdaBody body_tau of
