@@ -53,6 +53,25 @@ Roughly, the goal for now is to loosely follow the book by implementing the disc
 
 People can work on theorem proving about stuff in say chapter 2, while concurrently other people work on stuff for future chapters. Just see what is most interesting to you to implement or prove. People can also go back and give proofs of things that were left unproved, such as Church Rosser theorem, etc.
 
-### Haskell (branch `hs`, led by Ben / Aron)
+### Haskell (branch `hs`, led by Ben / Aaron)
+Currently two different implementations, the `Untyped` and `SimplyTyped` lambda
+calculi. These are pretty much done and were mainly to get a feel for
+Haskell/parser generators. Still, stuff like REPL support would be welcome as
+this work will probably be largely reusable in future languages
 
-### Haskell Inductive (branch `hs-inductive`, led by Ben / Aron)
+### Haskell Inductive (branch `hs-inductive`, led by Ben / Aaron)
+Working on a more robust type system with the ultimate goal of including
+inductive types (such as Idris's `data Nat = Z | S Nat`). In addition, product
+types and sum types as well as type constructors and records will be included
+with the intention of doing some pattern matching.
+
+This is a prototyping station for different features to be included in the proof
+system we build later. Aaron will be hacking on a dependently typed system, and
+we will either modify the inductive system with dependent types, modify
+dependent types with some nice syntactic sugar from `hs-inductive`, or start a
+new module entirely.
+
+Right now I'm working on writing out a grammar for the type system and will try
+to get a parser. In the mean time I'm reading some Pierce and Harper to learn
+about the implementations of these systems.
+
