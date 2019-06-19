@@ -25,4 +25,30 @@ Meeting times are yet to be determined.
 | Tuesday, June 11      | Chapter 3      |
 | Thursday, June 13     |       |
 | Tuesday, June 18      | Chapter 4      |
+| Thursday, June 19     |       |
+| Tuesday, June 25      | Chapter 5      |
 | Future TBD | TBD |
+
+
+## Status of Projects
+
+### Idris (branch `idris-impl`)
+
+Roughly, the goal for now is to loosely follow the book by implementing the discussed variants of lambda calculus. Since it is in Idris, we can also give proofs of some of the theorems in the book, with respect to our implementation. Roughly my attitude is to prove what I want / what is fun, but don't get too caught up on the proofs.
+
+#### Features / Progress
+- [x] All of chapter 1 (Parsing, beta reduction)
+- [x] (mixed) De Bruijn indices. With this representation alpha-equivalent terms are equal terms (`=`) in Idris
+- [x] Cool REPL for chapter 1
+- [x] Chapter 2 parsing
+- [x] Chapter 2 contexts, using dependent types to ensure all declarations are unique
+- [x] Derivation rules specified as an inductive type in Idris
+- [x] Fully verified type checker with respect to those rules. (i.e. it is impossible for the type checker to incorrectly accept / reject a program)
+- [ ] Theorem: Type preservation under substitution
+- [ ] Theorem: Beta reduction type preservation (done except for above theorem)
+- [ ] Theorem: Progress under beta reduction (should be very easy)
+- [ ] Term finder
+
+### Haskell (brannch `hs`)
+
+### Haskell Inductive (branch `hs-inductive`)
