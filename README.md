@@ -53,6 +53,6 @@ Roughly, the goal for now is to loosely follow the book by implementing the disc
 
 People can work on theorem proving about stuff in say chapter 2, while concurrently other people work on stuff for future chapters. Just see what is most interesting to you to implement or prove.
 
-### Haskell (brannch `hs`)
+### Haskell (branch `hs`)
 
 ### Haskell Inductive (branch `hs-inductive`)
