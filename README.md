@@ -75,3 +75,5 @@ Right now I'm working on writing out a grammar for the type system and will try
 to get a parser. In the mean time I'm reading some Pierce and Harper to learn
 about the implementations of these systems.
 
+Working grammar file can be found in the [lang.markdown](https://github.com/donald-pinckney/type-theory-seminar/blob/hs-inductive/toy-lambdas/src/Inductive/lang.markdown)
+file on the [hs-inductive](https://github.com/donald-pinckney/type-theory-seminar/tree/hs-inductive) branch.
