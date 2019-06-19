@@ -25,7 +25,7 @@ Meeting times are yet to be determined.
 | Tuesday, June 11      | Chapter 3      |
 | Thursday, June 13     |       |
 | Tuesday, June 18      | Chapter 4      |
-| Thursday, June 19     |       |
+| Thursday, June 20     |   Implementation meeting    |
 | Tuesday, June 25      | Chapter 5      |
 | Future TBD | TBD |
 
