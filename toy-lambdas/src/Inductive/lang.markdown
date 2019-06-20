@@ -11,11 +11,6 @@ typeLiteral ::= typeName
              |  prodType
              |  fnType
 
--- At least two
-sumType      ::= typeLiteral VBAR typeLiteral sumTypeTail
-sumTypeTail  ::=
-              | VBAR typeLiteral sumTypeTail
-
 prodType     ::= typeLiteral AST typeLiteral prodTypeTail
 prodTypeTail ::=
               |  AST typeLiteral prodTypeTail
@@ -27,7 +22,15 @@ fnFreeType   ::= typeName
 
 fnType       ::= fnFreeType RIGHTARROW typeLiteral
 
-typeDef ::= DATA typeName EQ typeDefBody
+typeDef ::= DATA typeName optTypeParams EQ typeDefBody
+
+optTypeParams ::=
+               |  "::" many1TypeVars "=>"
+
+many1TypeVars ::= typeVar
+               |  typeVar COMMA many1TypeVars
+
+typeVar ::= name
 
 typeDefBody ::=
              |  LBRACE recordEntryList RBRACE
