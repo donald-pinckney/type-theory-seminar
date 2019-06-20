@@ -1,4 +1,4 @@
-module Inductive.Syntax
+module Inductive.Syntax.Types
   ( Type(..)
   , Field(..)
   , TypeParam
