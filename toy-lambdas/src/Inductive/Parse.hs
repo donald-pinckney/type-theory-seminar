@@ -36,14 +36,15 @@ parseTypeDef = makeParser typeDef
 
 -- -----------------------------------------------------------------------------
 -- Some helper parsers
-parens = between (char '(') (char ')')
-braces = between (char '{') (char '}')
-padded = between skipSpaces skipSpaces
-vbar = (char '|')
+
+parens    = between (char '(') (char ')')
+braces    = between (char '{') (char '}')
+padded    = between skipSpaces skipSpaces
+vbar      = (char '|')
 uppercase = choice (map char ['A'..'Z'])
 lowercase = choice (map char ['a'..'z'])
-alpha = uppercase <|> lowercase
-digit = choice (map char ['0'..'9'])
+alpha     = uppercase <|> lowercase
+digit     = choice (map char ['0'..'9'])
 
 -- | parse a letter or a digit
 alphanum :: ReadP String
