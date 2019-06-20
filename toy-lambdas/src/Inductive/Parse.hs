@@ -45,6 +45,7 @@ parseTypeDef = makeParser typeDef
 
 -- -----------------------------------------------------------------------------
 -- The following are all 'ReadP Char's
+
 parens    = between (char '(') (char ')')
 braces    = between (char '{') (char '}')
 padded    = between skipSpaces skipSpaces
@@ -78,7 +79,9 @@ typeNameStr = do c    <- uppercase
 
 -- | 'typeParamStr'
 typeParamStr :: ReadP String
-typeParamStr = many1 lowercase
+typeParamStr = do c  <- lowercase
+                  cs <- many1 $ lowercase <|> digit
+                  return $ c : cs
 
 -- | 'commaSepList1' parses a comma separated list with at least one value
 commaSepList1 :: ReadP a -> ReadP [a]
