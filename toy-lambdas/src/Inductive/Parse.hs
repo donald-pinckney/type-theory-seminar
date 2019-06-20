@@ -19,10 +19,16 @@ import Inductive.Syntax
 -- -----------------------------------------------------------------------------
 -- Top level parsing functions
 
+-- | 'makeParser' takes a 'ReadP a' and returns a 'String' parser that returns a
+-- 'Maybe a'. This function applies the provided 'ReadP a' to the input and
+-- checks all the resulting parses. If any are complete (that is, all characters
+-- are parsed) then it returns 'Just x', where 'x' is the result of a successful
+-- complete parse. Otherwise, the function returns 'Nothing'.
+
 makeParser :: ReadP a -> String -> Maybe a
 makeParser p s = let parses = (readP_to_S p) s in
                      case (filter (null . snd) parses) of
-                       (p : _) -> Just $ (fst . last) parses
+                       (p : _) -> Just $ fst p
                        _ -> Nothing
 
 -- | Parse a type, returning a 'Just tp' on success and a 'Nothing' on failure.
@@ -74,11 +80,14 @@ typeNameStr = do c    <- uppercase
 typeParamStr :: ReadP String
 typeParamStr = many1 lowercase
 
+-- | 'commaSepList1' parses a comma separated list with at least one value
 commaSepList1 :: ReadP a -> ReadP [a]
 commaSepList1 p = sepBy1 p (padded $ char ',')
 
+-- | 'spaceSepList' parses a (possibly empty) space separated list
 spaceSepList :: ReadP a -> ReadP [a]
 spaceSepList p = sepBy p (Text.ParserCombinators.ReadP.many1 $ satisfy isSpace)
+
 -- -----------------------------------------------------------------------------
 -- Parse Types
 
