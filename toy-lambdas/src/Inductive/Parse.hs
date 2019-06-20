@@ -37,6 +37,8 @@ parseTypeDef = makeParser typeDef
 -- -----------------------------------------------------------------------------
 -- Some helper parsers
 
+-- -----------------------------------------------------------------------------
+-- The following are all 'ReadP Char's
 parens    = between (char '(') (char ')')
 braces    = between (char '{') (char '}')
 padded    = between skipSpaces skipSpaces
@@ -45,29 +47,40 @@ uppercase = choice (map char ['A'..'Z'])
 lowercase = choice (map char ['a'..'z'])
 alpha     = uppercase <|> lowercase
 digit     = choice (map char ['0'..'9'])
+identchar = (char '_') <|> alpha <|> digit
 
--- | parse a letter or a digit
+-- -----------------------------------------------------------------------------
+-- Parse common strings for names, etc
+
+-- | 'alphanum' parses a string of letters and digits
 alphanum :: ReadP String
 alphanum = many1 (alpha <|> digit)
-
--- | 'identchar' parses an internal identifier character, which includes
--- letters, numbers, and underscores
-identchar :: ReadP Char
-identchar = (char '_') <|> alpha <|> digit
 
 -- | 'varNameStr parses a variable name, which consists of a lowercase letter
 -- followed by zero or more 'identchar's
 varNameStr :: ReadP String
-varNameStr = do c <- lowercase
+varNameStr = do c    <- lowercase
                 rest <- Text.ParserCombinators.ReadP.many $ identchar
                 return $ c : rest
 
 -- | 'typeNameStr' parses a type name as a String. A type name must start with
 -- an uppercase character followed by zero or more 'identchar's
 typeNameStr :: ReadP String
-typeNameStr = do c <- uppercase
+typeNameStr = do c    <- uppercase
                  rest <- Text.ParserCombinators.ReadP.many $ identchar
                  return $ c : rest
+
+-- | 'typeParamStr'
+typeParamStr :: ReadP String
+typeParamStr = many1 lowercase
+
+commaSepList1 :: ReadP a -> ReadP [a]
+commaSepList1 p = sepBy1 p (padded $ char ',')
+
+spaceSepList :: ReadP a -> ReadP [a]
+spaceSepList p = sepBy p (Text.ParserCombinators.ReadP.many1 $ satisfy isSpace)
+-- -----------------------------------------------------------------------------
+-- Parse Types
 
 -- | 'typeName' parses a 'Type' by reading a string and applying the 'TypeName'
 -- value constructor
@@ -96,38 +109,22 @@ typeLit = typeName <|> prodType <|> fnType
 
 -- | 'typeDef' parses a 'TypeDef'
 typeDef :: ReadP TypeDef
-typeDef = do padded (string "data")
-             tName   <- padded typeNameStr
-             tParams <- padded optTypeParams
-             padded (char '=')
-             tbody   <- typeDefBody
-             return $ TypeDef tName tParams tbody
+typeDef =
+  do padded (string "data")
+     tName   <- padded typeNameStr
+     tParams <- padded optTypeParams
+     padded (char '=')
+     tbody   <- typeDefBody
+     return $ TypeDef tName tParams tbody where
 
-emptyTypeParams :: ReadP [TypeParam]
-emptyTypeParams = do return []
+       optTypeParams      = return [] <|> (padded $ string "::") >> commaSepList1 typeParamStr
+       typeDefBody        = valConstructorBody <++ typeLitBody
+       typeLitBody        = typeLit >>= return . TpDefLiteral
+       valConstructorBody = valConstructorList >>= return . TpDefValConstr
+       valConstructorList = sepBy1 valConstructor (padded vbar)
+       valConstructor     = do tName  <- typeNameStr
+                               skipSpaces
+                               tpList <- spaceSepList (typeName <|> (parens typeLit))
+                               return $  ValConstructor tName tpList
 
-optTypeParams :: ReadP [TypeParam]
-optTypeParams = emptyTypeParams <|>
-                do (padded $ string "::")
-                   params <- sepBy1 (many1 lowercase) (padded (char ','))
-                   return params
-
-typeDefBody :: ReadP TypeDefBody
-typeDefBody = valConstructorBody <++ typeLitBody
-
-typeLitBody :: ReadP TypeDefBody
-typeLitBody = do t <- typeLit
-                 return $ TpDefLiteral t
-
-valConstructorBody :: ReadP TypeDefBody
-valConstructorBody = do cs <- valConstructorList
-                        return $ TpDefValConstr cs
-  where
-    valConstructorList :: ReadP [ValConstructor]
-    valConstructorList = sepBy1 valConstructor (padded vbar)
-    valConstructor :: ReadP ValConstructor
-    valConstructor = do tName  <- typeNameStr
-                        skipSpaces
-                        tpList <- sepBy (typeName <|> (parens typeLit)) (many1 (satisfy isSpace))
-                        return $  ValConstructor tName tpList
 
