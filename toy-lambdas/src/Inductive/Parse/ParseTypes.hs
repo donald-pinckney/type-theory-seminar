@@ -1,4 +1,4 @@
-module Inductive.Parse
+module Inductive.Parse.ParseTypes
   ( makeParser
   , parseType
   , parseTypeDef
