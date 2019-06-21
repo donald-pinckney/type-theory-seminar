@@ -43,6 +43,15 @@ export
 push : BoundDeclaration -> Context -> Context
 push d (MkContext freeDecls boundDecls) = MkContext freeDecls (d :: boundDecls)
 
+export
+(++) : List BoundDeclaration -> Context -> Context
+(++) xs (MkContext freeDecls boundDecls) = MkContext freeDecls (xs ++ boundDecls)
+
+export
+appCtxLeftNeutral : (gamma : Context) -> [] ++ gamma = gamma
+appCtxLeftNeutral (MkContext uniqueFreeDecls boundDecls) = Refl
+
+
 public export
 data ValueAtKey : Type' -> (xs : List FreeDeclaration) -> FreeTermVariable -> Type where
     ThisKey : ValueAtKey x ((k, x) :: xs) k

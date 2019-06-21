@@ -53,3 +53,6 @@ leftTypeable (ApplRule {sigma} leftHolds rightHolds) = (sigma ** leftHolds)
 export
 rightTypeable : Holds $ MkTypeJudgment gamma (App left right) tau -> (sigma : Type' ** Holds $ MkTypeJudgment gamma right sigma)
 rightTypeable (ApplRule {sigma} _ rightHolds) = (sigma ** rightHolds)
+
+export
+weakening : Holds $ MkTypeJudgment gamma term sigma -> Holds $ MkTypeJudgment (extra ++ gamma) term sigma

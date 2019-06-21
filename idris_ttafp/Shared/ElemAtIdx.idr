@@ -1,8 +1,8 @@
-module ElemIdx
+module ElemAtIdx
 
 ||| A proof that some element is found in a list at some specified index.
 |||
-||| Example: `the (ElemIdx "bar" 1 ["foo", "bar", "baz"])`
+||| Example: `the (ElemAtIdx "bar" 1 ["foo", "bar", "baz"])`
 public export
 data ElemAtIdx : a -> (xs : List a) -> Nat -> Type where
      ||| A proof that the element is at the front of the list.

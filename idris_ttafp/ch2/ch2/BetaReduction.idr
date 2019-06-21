@@ -9,7 +9,7 @@ import ch2.Context
 
 %default total
 
-export
+partial export
 betaSingleStep : (input : Term) -> Holds $ MkTypeJudgment gamma input sigma -> Either (out : Term ** Holds $ MkTypeJudgment gamma out sigma) (InBNF input)
 betaSingleStep (Var x) j = Right BNFUnappliedVar
 betaSingleStep {gamma} {sigma=tau} (App (Var x) right) (ApplRule {sigma} left_arr right_sigma) =
@@ -24,8 +24,13 @@ betaSingleStep {gamma} {sigma = finalT} (App (App left_left left_right) right) (
         (Left (newRight ** newRight_t)) => Left (App (App left_left left_right) newRight ** ApplRule left_arr newRight_t)
         (Right right_bnf) => Right $ BNFAppApp left_bnf right_bnf
 
-betaSingleStep {gamma = gamma} {sigma=finalT} (App (Lambda bindType lambdaBody) right) (ApplRule (AbstRule body_t) right_t) = --?qwerqwer_2
-    Left (substituteTerms lambdaBody (Bound 0) right ** substitutionLemmaBound body_t right_t)
+-- substituteTopBound : (inTerm : Term) -> (withTerm : Term) -> (bindIndex : Nat) ->
+--     Holds $ MkTypeJudgment (extraDecls ++ (push bindType gamma)) inTerm finalT ->
+--     Holds $ MkTypeJudgment gamma withTerm bindType ->
+--     (out : Term ** Holds $ MkTypeJudgment (extraDecls ++ gamma) out finalT)
+
+betaSingleStep {gamma = gamma} {sigma=finalT} (App (Lambda bindType lambdaBody) right) (ApplRule (AbstRule body_t) right_t) =
+    Left $ substituteTopBound_pub {finalT=finalT} {gamma=gamma} {bindType=bindType} lambdaBody right body_t right_t
 
 betaSingleStep {gamma} {sigma = (Arrow bindType tau)} (Lambda bindType lambdaBody) (AbstRule body_tau) =
     case betaSingleStep lambdaBody body_tau of
