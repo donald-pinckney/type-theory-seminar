@@ -1,5 +1,7 @@
 module DependentlyTyped.Syntax
   ( checkContextInvariant
+  , SuperType (..)
+  , TypeConstr (..)
   , Type (..)
   , Decl (..)
   , Context
@@ -14,19 +16,19 @@ import Data.Map.Strict (Map)
 import Data.List (sort)
 import Control.Applicative
 
-data Type = TConstr TypeConstr
-          | SType SuperType
-          | SSType
-          deriving (Show, Eq)
+data SuperType = S
+               | SArrow SuperType SuperType
+               deriving (Show, Eq)
 
 data TypeConstr = TVar String
                 | TArrow TypeConstr TypeConstr
                 | Pi Decl TypeConstr
                 deriving (Show, Eq)
 
-data SuperType = S
-               | SArrow SuperType SuperType
-               deriving (Show, Eq)
+data Type = TConstr TypeConstr
+          | SType SuperType
+          | SSType
+          deriving (Show, Eq)
 
 data Term = Var String
           | Lambda Decl Term
