@@ -37,4 +37,4 @@ spec =
         it "can parse function types (weird whitespace)" $
             parseType "Nat -> String ->Dog-> String->Dog" `shouldJustBe` (FnType nat $ FnType string $ FnType dog $ FnType string dog)
         it "can parse function types (grouping)" $
-            parseType "(Nat -> String) -> (Nat -> Dog)" `shouldJustBe` (FnType (FnType nat string) (FnType nat dog))
+            parseType "(Nat -> String) -> Nat -> Dog" `shouldJustBe` (FnType (FnType nat string) (FnType nat dog))
