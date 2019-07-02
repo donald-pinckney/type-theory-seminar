@@ -33,6 +33,10 @@ two = (parse "λ f : A -> A . λ x : A . f (f x)")
 add = (parse "λ m : (A -> A) -> A -> A . λ n : (A -> A) -> A -> A . λ f : A -> A . λ x : A . m f (n f x)")
 mult = (parse "λ m : (A -> A) -> A -> A . λ n : (A -> A) -> A -> A . λ f : A -> A . λ x : A . m (n f) x")
 
+y = Var "y"
+const_builder = parse "λ x : A . λ y : B . x"
+
+
 spec :: Spec
 spec = do
     describe "SimplyTyped.context" $ do
@@ -158,3 +162,5 @@ spec = do
           (exec (Appl (Appl mult two) zero))
           `shouldBe`
           zero
+        it "`λ x . (λ y . x) y`  should reduce to `λ $0 . y`" $
+          (betaReduce (Appl const_builder y)) `shouldBe` (Lambda (Decl "$0" (TVar "B")) (Var "y"))

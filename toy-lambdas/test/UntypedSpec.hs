@@ -22,6 +22,8 @@ two = parse "λ f . λ x . f (f x)"
 add = parse "λ m . λ n . λ f . λ x . m f (n f x)"
 mult = parse "λ m . λ n . λ f . λ x . m (n f) x"
 
+const_builder = parse "λ x . λ y . x"
+
 add_term = Abst "m" (Abst "n" (Abst "f" (Abst "x" (
                Appl (Appl (Var "m") (Var "f")) (Appl (Appl (Var "n") (Var "f")) (Var "x"))
            ))))
@@ -69,6 +71,8 @@ spec = do
             (betaReduce (Appl idy id_id)) `shouldBe` id_id
         it "`λ x . (λ x . x) x`  should reduce to `λ x . x`" $ do
             (betaReduce (Appl x (Appl id_ x))) `shouldBe` (Appl x x)
+        it "`λ x . (λ y . x) y`  should reduce to `λ $0 . y`" $ do
+            (betaReduce (Appl const_builder y)) `shouldBe` (Abst "$0" (Var "y"))
 
     describe "Untyped.exec" $ do
         it "one + one = two" $ do
