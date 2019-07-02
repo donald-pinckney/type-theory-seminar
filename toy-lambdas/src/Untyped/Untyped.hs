@@ -9,6 +9,7 @@ module Untyped.Untyped
 
 import Data.Set
 import Control.Applicative
+import Utils.Renaming
 
 
 -- |Our grammar: a Term consists of variables, function abstraction, and
@@ -38,15 +39,6 @@ rename x y term =
   case term of Var a -> if a == x then Var y else term
                Abst a t -> if a == x then term else Abst a (rename x y t)
                Appl l r -> Appl (rename x y l) (rename x y r)
-
--- | Generate a new name distinct from the set of names in @ns@
-new_name :: Set String -> String
-new_name ns = head (Prelude.filter (\x -> notMember x ns) ["$" ++ (show i) | i <- [0..]])
-
--- | If @n@ is not contained in @ns@, return it. Otherwise, generate a new name
--- distinct from those contained in @ns@ and return it.
-default_or_new_name :: String -> Set String -> String
-default_or_new_name n ns = if member n ns then new_name ns else n
 
 -- | Perform substitution on a term, replacing all free instances of @Var x@
 -- with term @new@

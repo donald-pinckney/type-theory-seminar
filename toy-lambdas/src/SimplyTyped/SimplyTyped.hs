@@ -17,6 +17,7 @@ module SimplyTyped.SimplyTyped
 import Data.Set (Set, notMember, insert, empty, singleton, union, member, difference)
 import Data.Map.Strict (Map)
 import Data.List (sort)
+import Utils.Renaming
 
 {- Syntax -}
 
@@ -54,15 +55,6 @@ rename x y term =
                Lambda a t -> if name a == x then term else Lambda a (rename x y t)
                Appl l r -> Appl (rename x y l) (rename x y r)
 
--- | Generate a new name distinct from the set of names in @ns@
-new_name :: Set String -> String
-new_name ns = head (Prelude.filter (\x -> notMember x ns) ["$" ++ (show i) | i <- [0..]])
-
--- | If @n@ is not contained in @ns@, return it. Otherwise, generate a new name
--- distinct from those contained in @ns@ and return it.
-default_or_new_name :: String -> Set String -> String
-default_or_new_name n ns = if member n ns then new_name ns else n
-
 -- | Perform substitution on a term, replacing all free instances of @Var x@
 -- with term @new@
 substitute :: String -> Term -> Term -> Term
@@ -73,14 +65,6 @@ substitute x new (Lambda y p) = if (name y) == x then (Lambda y p)
                                   let y_new_name = default_or_new_name (name y) (fv new)
                                       p' = rename (name y) y_new_name p
                                   in Lambda (Decl y_new_name (tp y)) (substitute x new p')
-                                  -- (Lambda y (substitute x new p))
-
--- substitute :: String -> Term -> Term -> Term
--- substitute x new (Var y) = if x == y then new else (Var y)
--- substitute x new (Appl p q) = Appl (substitute x new p) (substitute x new q)
--- substitute x new (Abst y p) = let y' = default_or_new_name y (fv new)
---                                   p' = rename y y' p
---                               in Abst y' (substitute x new p')
 
 -- | Perform one step of beta reduction. We choose an order of evaluation
 -- application: namely, that we have @Appl l r@, we first check if @l@ is an
