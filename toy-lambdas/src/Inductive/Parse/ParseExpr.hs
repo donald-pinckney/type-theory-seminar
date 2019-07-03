@@ -30,21 +30,31 @@ boolLit = trueLit <|> falseLit
 parseExpr :: String -> Maybe Expr
 parseExpr = makeParser expr
 
-expr :: ReadP Expr
-expr = exprLet 
-  <|> exprITE 
-  <|> exprVar 
-  <|> exprFuncApp
-  <|> exprIntLiteral 
+simpleExpr :: ReadP Expr
+simpleExpr = exprITE
+  <|> exprLet
+  <|> exprIntLiteral
   <|> exprBoolLiteral
+  <|> exprVar
   <|> Inductive.Parse.ParseUtil.parens expr
 
-exprFuncApp :: ReadP Expr
-exprFuncApp = do
-  f <- expr
-  many1 $ satisfy isSpace
-  arg <- expr
-  return $ ExprApp f arg
+expr :: ReadP Expr
+expr = exprPossibleFuncApp
+
+exprPossibleFuncApp :: ReadP Expr
+exprPossibleFuncApp = do
+  exprs <- funcAppList
+  case buildFuncApp exprs of 
+    Nothing -> Text.ParserCombinators.ReadP.pfail
+    Just e -> return $ e
+  where
+    buildFuncApp :: [Expr] -> Maybe Expr
+    buildFuncApp [] = Nothing
+    buildFuncApp [e] = Just e 
+    buildFuncApp (f : a : rest) = buildFuncApp (ExprApp f a : rest)
+
+funcAppList :: ReadP [Expr]
+funcAppList = spaceSepList1 simpleExpr
 
 exprLet :: ReadP Expr
 exprLet = do

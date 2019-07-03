@@ -90,7 +90,7 @@ commaSepList1 p = sepBy1 p (padded $ char ',')
 spaceSepList :: ReadP a -> ReadP [a]
 spaceSepList p = sepBy p (Text.ParserCombinators.ReadP.many1 $ satisfy isSpace)
 
--- | 'spaceSepList1' parses a (possibly empty) space separated list
+-- | 'spaceSepList1' parses a space separated list with at least one element
 spaceSepList1 :: ReadP a -> ReadP [a]
 spaceSepList1 p = sepBy p (Text.ParserCombinators.ReadP.many1 $ satisfy isSpace)
 
