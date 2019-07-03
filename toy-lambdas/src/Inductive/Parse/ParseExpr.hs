@@ -31,15 +31,15 @@ parseExpr :: String -> Maybe Expr
 parseExpr = makeParser expr
 
 simpleExpr :: ReadP Expr
-simpleExpr = exprITE
-  <|> exprLet
-  <|> exprIntLiteral
+simpleExpr = exprIntLiteral
   <|> exprBoolLiteral
   <|> exprVar
   <|> Inductive.Parse.ParseUtil.parens expr
 
 expr :: ReadP Expr
-expr = exprPossibleFuncApp
+expr = exprLet 
+  <|> exprITE 
+  <|> exprPossibleFuncApp
 
 exprPossibleFuncApp :: ReadP Expr
 exprPossibleFuncApp = do
