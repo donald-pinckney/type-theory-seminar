@@ -58,29 +58,16 @@ valConstructor     ::= typeName typeLiteral
 
 ## Expressions
 
-### Literals
+```haskell
+expr ::= value | funcApp | let | ite | LPAREN expr RPAREN
+```
+
+### Values
 
 ```haskell
 positiveIntLit  ::= DIGIT+
 boolLitExpr     ::= "True" | "False"
-```
-
-### Arithemtic Expressions
-```haskell
-arithExpr ::= term
-           |  term addOp arithExpr
-
-term ::= factor
-      |  factor multOp term
-
-factor ::= positiveIntLit
-        |  optSign factor
-        |  LPAREN arithExpr RPAREN
-
-addOp  ::= PLUS | MINUS
-multOp ::= MULT | DIV
-
-arithExpr   ::= term arithOp arithExpr
+value ::= positiveIntLit | boolLitExpr
 ```
 
 ### Let Bindings
@@ -91,4 +78,9 @@ let ::= LET varName EQ expr IN expr
 ### If Then Else
 ```haskell
 ite ::= IF expr THEN expr ELSE expr
+```
+### Function Application
+
+```haskell
+funcApp ::= expr expr
 ```

@@ -47,4 +47,4 @@ exprVar = do
 exprIntLiteral :: ReadP Expr
 exprIntLiteral = do
   n <- intLit
-  return $ ExprIntLiteral (read n)
+  return $ ExprValue $ ValueInt (read n)

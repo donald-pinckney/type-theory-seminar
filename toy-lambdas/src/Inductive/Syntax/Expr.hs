@@ -1,6 +1,15 @@
 module Inductive.Syntax.Expr
-  ( Expr(..)
+  ( Value(..)
+  , Expr(..)
   ) where
+
+-- | 'Value' represents things in normal form
+data Value
+  -- | 'ValueInt' represents an integer value
+  = ValueInt Int
+  -- | 'ValueBoolean' represents a boolean value
+  | ValueBool Bool
+  deriving (Eq, Show)
 
 -- | 'Expr' represents an expression in the object language
 data Expr
@@ -10,6 +19,8 @@ data Expr
   | ExprITE Expr Expr Expr
   -- | 'ExprVar' constructs a variable
   | ExprVar String
-  -- | 'ExprIntLiteral' constructs an integer literal
-  | ExprIntLiteral Int
+  -- | 'ExprValue' constructs a base value
+  | ExprValue Value
+  -- | 'ExprApp' constructs a function application
+  | ExprApp Expr Expr
   deriving (Eq, Show)
