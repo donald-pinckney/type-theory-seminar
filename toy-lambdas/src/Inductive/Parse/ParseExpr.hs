@@ -7,17 +7,35 @@ import Text.ParserCombinators.ReadP
 import Control.Applicative
 import Inductive.Syntax.Expr
 import Inductive.Parse.ParseUtil
+import Text.Read
 
-intLit = many1 digit
+intLit :: ReadP Int
+intLit = do
+  dig <- many1 digit
+  return $ read dig
 
+trueLit :: ReadP Bool
+trueLit = do
+  string "true"
+  return $ True 
 
+falseLit :: ReadP Bool
+falseLit = do
+  string "false"
+  return $ False 
+
+boolLit = trueLit <|> falseLit
 
 -- | Parse an expression, returning a 'Just exp' on success and a 'Nothing' on failure.
 parseExpr :: String -> Maybe Expr
 parseExpr = makeParser expr
 
 expr :: ReadP Expr
-expr = exprLet <|> exprITE <|> exprVar <|> exprIntLiteral
+expr = exprLet 
+  <|> exprITE 
+  <|> exprVar 
+  <|> exprIntLiteral 
+  <|> exprBoolLiteral
 
 exprLet :: ReadP Expr
 exprLet = do
@@ -47,4 +65,9 @@ exprVar = do
 exprIntLiteral :: ReadP Expr
 exprIntLiteral = do
   n <- intLit
-  return $ ExprValue $ ValueInt (read n)
+  return $ ExprLit $ LitInt n
+
+exprBoolLiteral :: ReadP Expr
+exprBoolLiteral = do
+  b <- boolLit
+  return $ ExprLit $ LitBool b
