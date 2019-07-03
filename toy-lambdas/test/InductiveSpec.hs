@@ -52,10 +52,10 @@ spec = do
         it "can parse variable names" $
             parseExpr "x" `shouldJustBe` x
         it "can parse int literals" $
-            parseExpr "3732" `shouldJustBe` (ExprIntLiteral 3732)
+            parseExpr "3732" `shouldJustBe` (ExprLit $ LitInt 3732)
         it "can parse let expressions" $
             parseExpr "let x = y in zebra" `shouldJustBe` (ExprLet "x" y zebra)
         it "can parse nested let expressions" $
-            parseExpr "let x = 56 in let y = zebra in 123" `shouldJustBe` (ExprLet "x" (ExprIntLiteral 56) (ExprLet "y" zebra (ExprIntLiteral 123)))
+            parseExpr "let x = 56 in let y = zebra in 123" `shouldJustBe` (ExprLet "x" (ExprLit $ LitInt 56) (ExprLet "y" zebra (ExprLit $ LitInt 123)))
         it "can parse ITE" $
-            parseExpr "if y then 53 else zebra" `shouldJustBe` (ExprITE y (ExprIntLiteral 53) zebra)
+            parseExpr "if y then 53 else zebra" `shouldJustBe` (ExprITE y (ExprLit $ LitInt 53) zebra)

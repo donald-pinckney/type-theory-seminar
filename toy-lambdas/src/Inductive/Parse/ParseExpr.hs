@@ -34,8 +34,17 @@ expr :: ReadP Expr
 expr = exprLet 
   <|> exprITE 
   <|> exprVar 
+  <|> exprFuncApp
   <|> exprIntLiteral 
   <|> exprBoolLiteral
+  <|> Inductive.Parse.ParseUtil.parens expr
+
+exprFuncApp :: ReadP Expr
+exprFuncApp = do
+  f <- expr
+  many1 $ satisfy isSpace
+  arg <- expr
+  return $ ExprApp f arg
 
 exprLet :: ReadP Expr
 exprLet = do
