@@ -1,6 +1,6 @@
 package main
 
-pkgs = ch1, ch2, shared, baseline
+pkgs = ch1, ch2, shared, defs, baseline
 
 modules = Main
 executable = repl

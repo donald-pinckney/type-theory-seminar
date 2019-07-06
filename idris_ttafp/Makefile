@@ -1,5 +1,5 @@
 .PHONY: build
-build: build_Shared build_ch1 build_ch2
+build: build_Shared build_ch1 build_ch2 build_defs
 	idris --build main.ipkg
 
 .PHONY: build_Shared
@@ -20,9 +20,14 @@ build_ch2:
 		idris --build ch2.ipkg && \
 		idris --install ch2.ipkg
 
+.PHONY: build_defs
+build_defs:
+	cd defs && \
+		idris --build defs.ipkg && \
+		idris --install defs.ipkg
 
 .PHONY: test
-test: test_Shared test_ch1 test_ch2
+test: test_Shared test_ch1 test_ch2 test_defs
 	idris --checkpkg main.ipkg
 	idris --testpkg main.ipkg
 
@@ -47,10 +52,17 @@ test_ch2:
 		idris --testpkg ch2.ipkg && \
 		idris --install ch2.ipkg
 
+.PHONY: test_defs
+test_defs:
+	cd defs && \
+		idris --checkpkg defs.ipkg && \
+		idris --testpkg defs.ipkg && \
+		idris --install defs.ipkg
+
 
 
 .PHONY: clean
-clean: clean_Shared clean_ch1 clean_ch2
+clean: clean_Shared clean_ch1 clean_ch2 clean_defs
 	idris --clean main.ipkg
 
 .PHONY: clean_Shared
@@ -67,6 +79,11 @@ clean_ch1:
 clean_ch2:
 	cd ch2 && \
 		idris --clean ch2.ipkg
+
+.PHONY: clean_defs
+clean_defs:
+	cd defs && \
+		idris --clean defs.ipkg
 
 .PHONY: run
 run:	build

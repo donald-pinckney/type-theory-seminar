@@ -1,0 +1,12 @@
+package defs
+
+pkgs = shared
+
+modules = defs.AST
+    , defs.Parse
+    , defs.PrettyPrint
+    , defs.Repl
+    , defs.Resolve
+    , defs.CST
+
+tests = defs.Parse.parseTests
