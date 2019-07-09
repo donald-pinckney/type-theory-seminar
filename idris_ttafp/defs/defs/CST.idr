@@ -1,22 +1,23 @@
-module ch2.CST
+module defs.CST
 
 export
 record Identifier where
     constructor MkIdentifier
     text : String
 
-public export
-data CType
-    = CTypeStar
-    | CTypeBox
-    | CTypeArrow CType CType
-    | CTypeVariable Identifier
+mutual
+    export
+    record CDecl where
+        constructor MkCDecl
+        var : Identifier
+        type : CType
 
-export
-record CDecl where
-    constructor MkCDecl
-    var : Identifier
-    type : CType
+    public export
+    data CType
+        = CTypeStar
+        | CTypeBox
+        | CTypeArrow (Either CType CDecl) CType
+        | CTypeVariable Identifier
 
 public export
 data CExpr
@@ -55,28 +56,34 @@ export
 implementation Show Identifier where
     show (MkIdentifier text) = text
 
-export
-implementation Eq CType where
-    CTypeStar == CTypeStar = True
-    CTypeBox == CTypeBox = True
-    (CTypeArrow x y) == (CTypeArrow z w) = (x == z) && (y == w)
-    (CTypeVariable x) == (CTypeVariable y) = x == y
-    _ == _ = False
+mutual
+    export
+    implementation Eq CType where
+        CTypeStar == CTypeStar = True
+        CTypeBox == CTypeBox = True
+        (CTypeArrow (Left l) y) == (CTypeArrow (Left x) w) = (l == x) && (y == w)
+        (CTypeArrow (Left l) y) == (CTypeArrow (Right r) w) = False
+        (CTypeArrow (Right r) y) == (CTypeArrow (Left l) w) = False
+        (CTypeArrow (Right r) y) == (CTypeArrow (Right x) w) = (r == x) && (y == w) -- (x == z) && (y == w)
 
-export
-implementation Show CType where
-    show CTypeStar = "*"
-    show CTypeBox = "BOX"
-    show (CTypeArrow x y) = "(" ++ (show x) ++ ") -> " ++ show y
-    show (CTypeVariable x) = show x
+        (CTypeVariable x) == (CTypeVariable y) = x == y
+        _ == _ = False
 
-export
-implementation Eq CDecl where
-    (MkCDecl var type) == (MkCDecl x y) = (var == x) && (type == y)
+    export
+    implementation Show CType where
+        show CTypeStar = "*"
+        show CTypeBox = "BOX"
+        show (CTypeArrow (Left t) y) = "(" ++ (show t) ++ ") -> " ++ show y
+        show (CTypeArrow (Right td) y) = "(" ++ (show td) ++ ") -> " ++ show y
+        show (CTypeVariable x) = show x
 
-export
-implementation Show CDecl where
-    show (MkCDecl var type) = show var ++ " : " ++ show type
+    export
+    implementation Eq CDecl where
+        (MkCDecl var type) == (MkCDecl x y) = (var == x) && (type == y)
+
+    export
+    implementation Show CDecl where
+        show (MkCDecl var type) = show var ++ " : " ++ show type
 
 export
 implementation Eq CExpr where

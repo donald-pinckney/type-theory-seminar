@@ -54,11 +54,11 @@ parseIdentifier acc vStr@(x :: xs) =
 
 
 mutual
-    parseArrowFactor : List Char -> ParseResultInternal CType
+    parseArrowFactor : List Char -> ParseResultInternal (Either CType CDecl)
     parseArrowFactor [] = error "Exepcted arrow type LHS to parse"
     parseArrowFactor ('(' :: xs) = do
         let xs = eatWhitespace xs
-        (t, xs) <- parseType xs
+        (t, xs) <- parseTypeOrDecl xs
         let xs = eatWhitespace xs
         xs <- expect xs ')'
         pure (t, xs)
@@ -66,22 +66,33 @@ mutual
         let xs = eatWhitespace xs
         (tv, xs) <- parseIdentifier "" xs
         let xs = eatWhitespace xs
-        success (CTypeVariable tv, xs)
+        case eatAndMatch xs ":" of
+            (rest, False) => success (Left $ CTypeVariable tv, rest)
+            (rest, True) => do
+                let xs = eatWhitespace rest
+                (t, xs) <- parseType xs
+                success (Right $ MkCDecl tv t, xs)
 
     -- *a         ->    a*
     -- *a -> b    ->    a -> b*
-    parseType : List Char -> ParseResultInternal CType
-    parseType [] = error "Expected type to parse"
-    parseType xs = do
+    parseTypeOrDecl : List Char -> ParseResultInternal (Either CType CDecl)
+    parseTypeOrDecl [] = error "Expected type to parse"
+    parseTypeOrDecl xs = do
         let xs = eatWhitespace xs
         (t, xs) <- parseArrowFactor xs
         let xs = eatWhitespace xs
         case eatAndMatch xs "->" of
             (rest, True) => do
                 (arrowRHS, rest) <- parseType (eatWhitespace rest)
-                pure (CTypeArrow t arrowRHS, rest)
+                pure (Left $ CTypeArrow t arrowRHS, rest)
             (rest, False) => pure (t, rest)
 
+    parseType : List Char -> ParseResultInternal CType
+    parseType xs = do
+        (t, xs) <- parseTypeOrDecl xs
+        case t of
+            Left t' => success (t', xs)
+            Right d => error "Declaration not allowed here."
 
 
 
@@ -258,6 +269,9 @@ b = MkIdentifier "b"
 c : Identifier
 c = MkIdentifier "c"
 
+t : Identifier
+t = MkIdentifier "t"
+
 T : Identifier
 T = MkIdentifier "T"
 
@@ -288,23 +302,10 @@ parseTests = makeTest [
     parse "" ===? [],
     parse "(Def x (a b c) (a (b c)) (T)) (Def b (a b c) (a b c) (T -> U))"
         ===? [CLineDef $ MkCDef x [a, b, c] (CExprApp a' (CExprApp b' c')) T',
-              CLineDef $ MkCDef b [a, b, c] (CExprApp (CExprApp a' b') c') (CTypeArrow T' U')],
+              CLineDef $ MkCDef b [a, b, c] (CExprApp (CExprApp a' b') c') (CTypeArrow (Left T') U')],
+    parse "(Def x (a b c) (a (b c)) (T)) (Def b (a b c) (a b c) ((t : T) -> U))"
+        ===? [CLineDef $ MkCDef x [a, b, c] (CExprApp a' (CExprApp b' c')) T',
+              CLineDef $ MkCDef b [a, b, c] (CExprApp (CExprApp a' b') c') (CTypeArrow (Right (MkCDecl t T')) U')],
     parse "(Suppose x (T -> U) (Def x (a b c) (a (b c)) (T)))"
-        ===? [CLineSuppose (MkCDecl x (CTypeArrow T' U')) [CLineDef $ MkCDef x [a, b, c] (CExprApp a' (CExprApp b' c')) T']]
-    -- parseExpr_sexp (unpack "(xy)") ===? CExprVariable "xy",
-    -- parseExpr_sexp (unpack "(x y)") ===? App (Variable "x") (Variable "y"),
-    -- parseExpr_sexp (unpack "(x y z)") ===? App (App (Variable "x") (Variable "y")) (Variable "z"),
-    -- parseExpr_sexp (unpack "(esdx zy zz)") ===? App (App (Variable "esdx") (Variable "zy")) (Variable "zz"),
-    -- parseExpr_sexp (unpack "(x (y z))") ===? App (Variable "x") (App (Variable "y") (Variable "z")),
-    -- parseExpr_sexp (unpack "(x(y z))") ===? App (Variable "x") (App (Variable "y") (Variable "z")),
-    -- parseExpr_sexp (unpack "((x y) z)") ===? App (App (Variable "x") (Variable "y")) (Variable "z"),
-    -- parseExpr_sexp (unpack "((x y)z)") ===? App (App (Variable "x") (Variable "y")) (Variable "z"),
-    -- parseExpr_sexp (unpack "(\\x:a.x y)") ===? Lambda [("x", TypeVariable "a")] (App (Variable "x") (Variable "y")),
-    -- parseExpr_sexp (unpack "(\\x : a. x y)") ===? Lambda [("x", TypeVariable "a")] (App (Variable "x") (Variable "y")),
-    -- parseExpr_sexp (unpack "(\\xy:ab.x y)") ===? Lambda [("xy", TypeVariable "ab")] (App (Variable "x") (Variable "y")),
-    -- parseExpr_sexp (unpack "(\\x:a,y:b .x y)") ===? Lambda [("x", TypeVariable "a"), ("y", TypeVariable "b")] (App (Variable "x") (Variable "y")),
-    -- parseExpr_sexp (unpack "(\\x:a , y:b. x (y z))") ===? Lambda [("x", TypeVariable "a"), ("y", TypeVariable "b")] (App (Variable "x") (App (Variable "y") (Variable "z"))),
-    -- parseExpr_sexp (unpack "((\\x:a.x y))") ===? Lambda [("x", TypeVariable "a")] (App (Variable "x") (Variable "y")),
-    -- parseExpr_sexp (unpack "((\\x:a.x y)(\\y:b.x y))") ===? App (Lambda [("x", TypeVariable "a")] (App (Variable "x") (Variable "y"))) (Lambda [("y", TypeVariable "b")] (App (Variable "x") (Variable "y"))),
-    -- parseExpr_sexp (unpack "(\\x:a.\\y:b.x(\\z:c.x z) w)") ===? Lambda [("x", TypeVariable "a")] (Lambda [("y", TypeVariable "b")] (App (App (Variable "x") (Lambda [("z", TypeVariable "c")] (App (Variable "x") (Variable "z")))) (Variable "w")))
+        ===? [CLineSuppose (MkCDecl x (CTypeArrow (Left T') U')) [CLineDef $ MkCDef x [a, b, c] (CExprApp a' (CExprApp b' c')) T']]
 ]
