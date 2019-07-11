@@ -37,15 +37,7 @@ Show ParsedTerm where
 
 
 ParseResultInternal : Type -> Type
-ParseResultInternal t = Result (t, List Char)
-
-expect : List Char -> Char -> Result (List Char)
-expect [] c = Left $ "Expected '" ++ (singleton c) ++ "', but no input left."
-expect (x :: xs) c =
-    if x == c then
-        Right xs
-    else
-        Left $ "Expected '" ++ (singleton c) ++ "', got '" ++ (singleton x) ++ "'"
+ParseResultInternal t = Result (t, SourceString)
 
 isVarChar : Char -> Bool
 isVarChar c = isAlpha c || isDigit c || (
@@ -67,12 +59,12 @@ isStartOfTerm c = isVarChar c || c == '(' || c == '\\'
 
 
 
-parseVar : String -> List Char -> ParseResultInternal String
+parseVar : String -> SourceString -> ParseResultInternal String
 parseVar acc [] = Right (acc, [])
-parseVar acc vStr@(x :: xs) =
-    if isVarChar x then
-        parseVar (acc ++ (singleton x)) xs
-    else if isWhitespace x then
+parseVar acc vStr@((nx, cx) :: xs) =
+    if isVarChar cx then
+        parseVar (acc ++ (singleton cx)) xs
+    else if isWhitespace cx then
         Right (acc, xs)
     else if length acc == 0 then
         Left "Expected variable to parse"
@@ -80,9 +72,9 @@ parseVar acc vStr@(x :: xs) =
         Right (acc, vStr)
 
 mutual
-    parseArrowFactor : List Char -> ParseResultInternal ParsedType
+    parseArrowFactor : SourceString -> ParseResultInternal ParsedType
     parseArrowFactor [] = Left "Exepcted arrow type LHS to parse"
-    parseArrowFactor ('(' :: xs) = do
+    parseArrowFactor ((nx, '(') :: xs) = do
         let xs = eatWhitespace xs
         (t, xs) <- parseType xs
         let xs = eatWhitespace xs
@@ -96,7 +88,7 @@ mutual
 
     -- *a         ->    a*
     -- *a -> b    ->    a -> b*
-    parseType : List Char -> ParseResultInternal ParsedType
+    parseType : SourceString -> ParseResultInternal ParsedType
     parseType [] = Left "Expected type to parse"
     parseType xs = do
         let xs = eatWhitespace xs
@@ -113,7 +105,7 @@ mutual
 
 -- *xe:a, y : b, zr:c.   ->   xe:a, *y : b, zr:c.
 -- xe:a, y : b, *zr:c.   ->   xe:a, y : b, zr:c*.
-parseVarAndType : List Char -> ParseResultInternal (String, ParsedType)
+parseVarAndType : SourceString -> ParseResultInternal (String, ParsedType)
 parseVarAndType xs = do
     (v, xs) <- parseVar "" xs
     let xs = eatWhitespace xs
@@ -126,11 +118,11 @@ parseVarAndType xs = do
     pure ((v, t), xs)
 
 -- *x, y, z.   ->   x, y, z.*
-parseLambdaVars : List Char -> ParseResultInternal (List (String, ParsedType))
-parseLambdaVars ('.' :: xs) = Right ([], xs)
+parseLambdaVars : SourceString -> ParseResultInternal (List (String, ParsedType))
+parseLambdaVars ((nx, '.') :: xs) = Right ([], xs)
 parseLambdaVars varsStr = do
     -- ?pouwer
-    (varAndType, rest) <- parseVarAndType $ unpack $ trim $ pack varsStr
+    (varAndType, rest) <- parseVarAndType $ unpackSource $ trim $ packSource varsStr
     (moreVarsAndTypes, rest2) <- parseLambdaVars rest
     pure (varAndType :: moreVarsAndTypes, rest2)
 
@@ -143,17 +135,17 @@ mutual
 
     -- Something like \x y z.M
     -- But this starts with '\' already removed.
-    parseLambda : List Char -> ParseResultInternal ParsedTerm
+    parseLambda : SourceString -> ParseResultInternal ParsedTerm
     parseLambda str = do
         (varsAndTypes, bodyStr) <- parseLambdaVars str
         (body, rest) <- parseTerm bodyStr
         pure (Lambda varsAndTypes body, rest)
 
 
-    parseTermSingle : List Char -> ParseResultInternal ParsedTerm
+    parseTermSingle : SourceString -> ParseResultInternal ParsedTerm
     parseTermSingle [] = Left "Expected input"
-    parseTermSingle str@('\\' :: xs) = parseLambda xs
-    parseTermSingle str@('(' :: xs) = do
+    parseTermSingle str@((nx, '\\') :: xs) = parseLambda xs
+    parseTermSingle str@((nx, '(') :: xs) = do
         -- let a = unsafePerformIO {ffi=FFI_C} (do putStrLn "asdfasdf"; pure ())
         (t, r1) <- parseTerm xs
         r2 <- expect r1 ')'
@@ -162,10 +154,10 @@ mutual
         (vStr, rest) <- parseVar "" str
         pure (Variable vStr, rest)
 
-    parseTermList : List Char -> ParseResultInternal (List ParsedTerm)
+    parseTermList : SourceString -> ParseResultInternal (List ParsedTerm)
     parseTermList [] = Right ([], [])
-    parseTermList str@(x :: xs) =
-            if not (isStartOfTerm x) then
+    parseTermList str@((nx, cx) :: xs) =
+            if not (isStartOfTerm cx) then
                 -- Left $ "expected start of term, instead got: " ++ (singleton x)
                 pure ([], str)
             else do
@@ -174,7 +166,7 @@ mutual
                 (ts, rest3) <- parseTermList rest2
                 pure (t :: ts, rest3)
 
-    parseTerm : List Char -> ParseResultInternal ParsedTerm
+    parseTerm : SourceString -> ParseResultInternal ParsedTerm
     parseTerm w_str = do
         let str = eatWhitespace w_str
         (tList, rest) <- parseTermList str
@@ -184,17 +176,17 @@ mutual
 
 
 export
-parse_unpacked : List Char -> Result ParsedTerm
+parse_unpacked : SourceString -> Result ParsedTerm
 parse_unpacked str = do
     let Right (parsed, []) = parseTerm $ str
         | Left err => Left err
         | Right (parsed, remainingStr) =>
-            Left ("Remaining input not parsed: " ++ pack remainingStr)
+            Left ("Remaining input not parsed: " ++ packSource remainingStr)
     pure parsed
 
 export
 parse : String -> Result ParsedTerm
-parse str = parse_unpacked (unpack str)
+parse str = parse_unpacked (unpackSource str)
 
 
 ------------------ Tests -----------------

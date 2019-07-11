@@ -4,6 +4,7 @@ import ch1.AST
 import ch1.Parse
 import Debug.Error
 import Result
+import ParseUtils
 
 
 public export
@@ -45,7 +46,7 @@ resolve : ParsedTerm -> ResolveResult
 resolve = resolveMain []
 
 export
-parseAndResolve_unpacked : List Char -> ResolveResult
+parseAndResolve_unpacked : SourceString -> ResolveResult
 parseAndResolve_unpacked str = do
     p <- parse_unpacked str
     resolve p

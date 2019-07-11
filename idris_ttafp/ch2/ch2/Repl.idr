@@ -8,6 +8,8 @@ import ch2.BetaReduction
 import ch2.PrettyPrint
 import ch2.Resolve
 import ch2.Context
+import ParseUtils
+
 
 ReplState : Type
 ReplState = ()

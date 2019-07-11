@@ -23,15 +23,8 @@ Show ParsedTerm where
 
 
 ParseResultInternal : Type -> Type
-ParseResultInternal t = Result (t, List Char)
+ParseResultInternal t = Result (t, SourceString)
 
-expect : List Char -> Char -> Result (List Char)
-expect [] c = Left $ "Expected '" ++ (singleton c) ++ "', but no input left."
-expect (x :: xs) c =
-    if x == c then
-        Right xs
-    else
-        Left $ "Expected '" ++ (singleton c) ++ "', got '" ++ (singleton x) ++ "'"
 
 isVarChar : Char -> Bool
 isVarChar c = isAlpha c || isDigit c || (
@@ -53,12 +46,12 @@ isStartOfTerm c = isVarChar c || c == '(' || c == '\\'
 
 -- *xe y zr.   ->   xe *y zr.
 -- xe y *zr.   ->   xe y zr*.
-parseVar : String -> List Char -> ParseResultInternal String
+parseVar : String -> SourceString -> ParseResultInternal String
 parseVar acc [] = Right (acc, [])
-parseVar acc vStr@(x :: xs) =
-    if isVarChar x then
-        parseVar (acc ++ (pack [x])) xs
-    else if isWhitespace x then
+parseVar acc vStr@((nx, cx) :: xs) =
+    if isVarChar cx then
+        parseVar (acc ++ (pack [cx])) xs
+    else if isWhitespace cx then
         Right (acc, xs)
     else if length acc == 0 then
         Left "Expected variable to parse"
@@ -66,10 +59,10 @@ parseVar acc vStr@(x :: xs) =
         Right (acc, vStr)
 
 -- *x y z.   ->   x y z.*
-parseLambdaVars : List Char -> ParseResultInternal (List String)
-parseLambdaVars ('.' :: xs) = Right ([], xs)
+parseLambdaVars : SourceString -> ParseResultInternal (List String)
+parseLambdaVars ((nx, '.') :: xs) = Right ([], xs)
 parseLambdaVars varsStr = do
-    (v, rest) <- parseVar "" $ unpack $ trim $ pack varsStr
+    (v, rest) <- parseVar "" $ unpackSource $ trim $ packSource varsStr
     (moreV, rest2) <- parseLambdaVars rest
     pure (v :: moreV, rest2)
 
@@ -82,17 +75,17 @@ mutual
 
     -- Something like \x y z.M
     -- But this starts with '\' already removed.
-    parseLambda : List Char -> ParseResultInternal ParsedTerm
+    parseLambda : SourceString -> ParseResultInternal ParsedTerm
     parseLambda str = do
         (vars, bodyStr) <- parseLambdaVars str
         (body, rest) <- parseTerm bodyStr
         pure (Lambda vars body, rest)
 
 
-    parseTermSingle : List Char -> ParseResultInternal ParsedTerm
+    parseTermSingle : SourceString -> ParseResultInternal ParsedTerm
     parseTermSingle [] = Left "Expected input"
-    parseTermSingle str@('\\' :: xs) = parseLambda xs
-    parseTermSingle str@('(' :: xs) = do
+    parseTermSingle str@((nx, '\\') :: xs) = parseLambda xs
+    parseTermSingle str@((nx, '(') :: xs) = do
         -- let a = unsafePerformIO {ffi=FFI_C} (do putStrLn "asdfasdf"; pure ())
         (t, r1) <- parseTerm xs
         r2 <- expect r1 ')'
@@ -101,10 +94,10 @@ mutual
         (vStr, rest) <- parseVar "" str
         pure (Variable vStr, rest)
 
-    parseTermList : List Char -> ParseResultInternal (List ParsedTerm)
+    parseTermList : SourceString -> ParseResultInternal (List ParsedTerm)
     parseTermList [] = Right ([], [])
-    parseTermList str@(x :: xs) =
-            if not (isStartOfTerm x) then
+    parseTermList str@((nx, cx) :: xs) =
+            if not (isStartOfTerm cx) then
                 -- Left $ "expected start of term, instead got: " ++ (singleton x)
                 pure ([], str)
             else do
@@ -113,7 +106,7 @@ mutual
                 (ts, rest3) <- parseTermList rest2
                 pure (t :: ts, rest3)
 
-    parseTerm : List Char -> ParseResultInternal ParsedTerm
+    parseTerm : SourceString -> ParseResultInternal ParsedTerm
     parseTerm w_str = do
         let str = eatWhitespace w_str
         (tList, rest) <- parseTermList str
@@ -123,11 +116,11 @@ mutual
 
 
 export
-parse_unpacked : List Char -> Result ParsedTerm
+parse_unpacked : SourceString -> Result ParsedTerm
 parse_unpacked str = case parseTerm str of
     (Left err) => Left err
     (Right (parsed, [])) => Right parsed
-    (Right (parsed, x :: xs)) => Left ("Remaining input not parsed: " ++ pack (x :: xs))
+    (Right (parsed, x :: xs)) => Left ("Remaining input not parsed: " ++ packSource (x :: xs))
 
 
 -- parse_unpacked str = do
@@ -139,7 +132,7 @@ parse_unpacked str = case parseTerm str of
 
 export
 parse : String -> Result ParsedTerm
-parse str = parse_unpacked (unpack str)
+parse str = parse_unpacked (unpackSource str)
 
 
 ------------------ Tests -----------------

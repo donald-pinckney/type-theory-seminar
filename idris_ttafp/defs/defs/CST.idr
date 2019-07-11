@@ -1,9 +1,6 @@
 module defs.CST
 
-export
-record Identifier where
-    constructor MkIdentifier
-    text : String
+import defs.Identifier
 
 mutual
     export
@@ -45,16 +42,16 @@ mutual
         | CLineSuppose CDecl CBook
 
 
------ INTERFACE IMPLEMENTATIONS -------------
+--------- INTERFACE IMPLEMENTATIONS -------------
 
 
 export
 implementation Eq Identifier where
-    (MkIdentifier text) == (MkIdentifier x) = text == x
+    id1 == id2 = text id1 == text id2
 
 export
 implementation Show Identifier where
-    show (MkIdentifier text) = text
+    show id = text id
 
 mutual
     export
@@ -109,6 +106,8 @@ export
 implementation Show CDef where
     show (MkCDef name args body type) = show name ++ "(" ++ (unwords $ map show args) ++ ") := " ++ show body ++ " : " ++ show type
 
+
+-- Have to do a bunch of gymnastics to convince Idris of totality
 total suppose_eq : (aDef : CDecl) -> (aBook : CBook) -> (bDef : CDecl) -> (bBook : CBook) -> Bool
 suppose_eq aDef [] bDef [] = aDef == bDef
 suppose_eq aDef [] bDef (x :: xs) = False

@@ -4,18 +4,11 @@ import ParseUtils
 import Result
 import TestingSupport
 import defs.CST
+import defs.Identifier
 
 
 ParseResultInternal : Type -> Type
-ParseResultInternal t = Result (t, List Char)
-
-expect : List Char -> Char -> Result (List Char)
-expect [] c = error $ "Expected '" ++ (singleton c) ++ "', but no input left."
-expect (x :: xs) c =
-    if x == c then
-        success xs
-    else
-        error $ "Expected '" ++ (singleton c) ++ "', got '" ++ (singleton x) ++ "'"
+ParseResultInternal t = Result (t, SourceString)
 
 isVarChar : Char -> Bool
 isVarChar c = isAlpha c || isDigit c || (
@@ -34,15 +27,12 @@ isVarChar c = isAlpha c || isDigit c || (
 isStartOfTerm : Char -> Bool
 isStartOfTerm c = isVarChar c || c == '(' || c == '\\'
 
-
-
-
-parseIdentifier : String -> List Char -> ParseResultInternal Identifier
+parseIdentifier : SourceString -> SourceString -> ParseResultInternal Identifier
 parseIdentifier acc [] = success (MkIdentifier acc, [])
-parseIdentifier acc vStr@(x :: xs) =
-    if isVarChar x then
-        parseIdentifier (acc ++ (singleton x)) xs
-    else if isWhitespace x then
+parseIdentifier acc vStr@((nx, cx) :: xs) =
+    if isVarChar cx then
+        parseIdentifier (acc ++ [(nx, cx)]) xs
+    else if isWhitespace cx then
         success (MkIdentifier acc, xs)
     else if length acc == 0 then
         error "Expected variable to parse"
@@ -54,9 +44,9 @@ parseIdentifier acc vStr@(x :: xs) =
 
 
 mutual
-    parseArrowFactor : List Char -> ParseResultInternal (Either CType CDecl)
+    parseArrowFactor : SourceString -> ParseResultInternal (Either CType CDecl)
     parseArrowFactor [] = error "Exepcted arrow type LHS to parse"
-    parseArrowFactor ('(' :: xs) = do
+    parseArrowFactor ((nx, '(') :: xs) = do
         let xs = eatWhitespace xs
         (t, xs) <- parseTypeOrDecl xs
         let xs = eatWhitespace xs
@@ -64,7 +54,7 @@ mutual
         pure (t, xs)
     parseArrowFactor xs = do
         let xs = eatWhitespace xs
-        (tv, xs) <- parseIdentifier "" xs
+        (tv, xs) <- parseIdentifier [] xs
         let xs = eatWhitespace xs
         case eatAndMatch xs ":" of
             (rest, False) => success (Left $ CTypeVariable tv, rest)
@@ -75,7 +65,7 @@ mutual
 
     -- *a         ->    a*
     -- *a -> b    ->    a -> b*
-    parseTypeOrDecl : List Char -> ParseResultInternal (Either CType CDecl)
+    parseTypeOrDecl : SourceString -> ParseResultInternal (Either CType CDecl)
     parseTypeOrDecl [] = error "Expected type to parse"
     parseTypeOrDecl xs = do
         let xs = eatWhitespace xs
@@ -87,7 +77,7 @@ mutual
                 pure (Left $ CTypeArrow t arrowRHS, rest)
             (rest, False) => pure (t, rest)
 
-    parseType : List Char -> ParseResultInternal CType
+    parseType : SourceString -> ParseResultInternal CType
     parseType xs = do
         (t, xs) <- parseTypeOrDecl xs
         case t of
@@ -98,9 +88,9 @@ mutual
 
 -- *xe:a, y : b, zr:c.   ->   xe:a, *y : b, zr:c.
 -- xe:a, y : b, *zr:c.   ->   xe:a, y : b, zr:c*.
-parseVarAndType : List Char -> ParseResultInternal CDecl
+parseVarAndType : SourceString -> ParseResultInternal CDecl
 parseVarAndType xs = do
-    (v, xs) <- parseIdentifier "" xs
+    (v, xs) <- parseIdentifier [] xs
     let xs = eatWhitespace xs
     xs <- expect xs ':'
     let xs = eatWhitespace xs
@@ -111,11 +101,10 @@ parseVarAndType xs = do
     pure (MkCDecl v t, xs)
 
 -- *x, y, z.   ->   x, y, z.*
-parseLambdaVars : List Char -> ParseResultInternal (List CDecl)
-parseLambdaVars ('.' :: xs) = success ([], xs)
+parseLambdaVars : SourceString -> ParseResultInternal (List CDecl)
+parseLambdaVars ((nx, '.') :: xs) = success ([], xs)
 parseLambdaVars varsStr = do
-    -- ?pouwer
-    (varAndType, rest) <- parseVarAndType $ unpack $ trim $ pack varsStr
+    (varAndType, rest) <- parseVarAndType (eatWhitespace varsStr)
     (moreVarsAndTypes, rest2) <- parseLambdaVars rest
     pure (varAndType :: moreVarsAndTypes, rest2)
 
@@ -128,28 +117,28 @@ mutual
 
     -- Something like \x y z.M
     -- But this starts with '\' already removed.
-    parseLambda : List Char -> ParseResultInternal CExpr
+    parseLambda : SourceString -> ParseResultInternal CExpr
     parseLambda str = do
         (varsAndTypes, bodyStr) <- parseLambdaVars str
         (body, rest) <- parseTerm bodyStr
         pure (CExprLambda varsAndTypes body, rest)
 
 
-    parseTermSingle : List Char -> ParseResultInternal CExpr
+    parseTermSingle : SourceString -> ParseResultInternal CExpr
     parseTermSingle [] = error "Expected input"
-    parseTermSingle str@('\\' :: xs) = parseLambda xs
-    parseTermSingle str@('(' :: xs) = do
+    parseTermSingle str@((nx, '\\') :: xs) = parseLambda xs
+    parseTermSingle str@((nx, '(') :: xs) = do
         (t, r1) <- parseTerm xs
         r2 <- expect r1 ')'
         pure (t, r2)
     parseTermSingle str = do
-        (vStr, rest) <- parseIdentifier "" str
+        (vStr, rest) <- parseIdentifier [] str
         pure (CExprVariable vStr, rest)
 
-    parseTermList : List Char -> ParseResultInternal (List CExpr)
+    parseTermList : SourceString -> ParseResultInternal (List CExpr)
     parseTermList [] = success ([], [])
-    parseTermList str@(x :: xs) =
-            if not (isStartOfTerm x) then
+    parseTermList str@((nx, cx) :: xs) =
+            if not (isStartOfTerm cx) then
                 pure ([], str)
             else do
                 (t, rest) <- parseTermSingle str
@@ -157,7 +146,7 @@ mutual
                 (ts, rest3) <- parseTermList rest2
                 pure (t :: ts, rest3)
 
-    parseTerm : List Char -> ParseResultInternal CExpr
+    parseTerm : SourceString -> ParseResultInternal CExpr
     parseTerm w_str = do
         let str = eatWhitespace w_str
         (tList, rest) <- parseTermList str
@@ -168,27 +157,27 @@ mutual
 
 
 
-parseExpr_sexp : List Char -> ParseResultInternal CExpr
+parseExpr_sexp : SourceString -> ParseResultInternal CExpr
 parseExpr_sexp str = do
     str <- expect str '('
     (e, str) <- parseTerm str
     str <- expect str ')'
     success (e, str)
 
-parseType_sexp : List Char -> ParseResultInternal CType
+parseType_sexp : SourceString -> ParseResultInternal CType
 parseType_sexp str = do
     str <- expect str '('
     (t, str) <- parseType str
     str <- expect str ')'
     success (t, str)
 
-parseIdentifierList : List Char -> ParseResultInternal (List Identifier)
-parseIdentifierList str@(c :: cs) =
-    if isWhitespace c then
+parseIdentifierList : SourceString -> ParseResultInternal (List Identifier)
+parseIdentifierList str@((nx, cx) :: cs) =
+    if isWhitespace cx then
         parseIdentifierList (eatWhitespace str)
-    else if isVarChar c then
+    else if isVarChar cx then
         do
-            (x, str) <- parseIdentifier "" str
+            (x, str) <- parseIdentifier [] str
             let str = eatWhitespace str
             (xs, str) <- parseIdentifierList str
             let str = eatWhitespace str
@@ -198,13 +187,13 @@ parseIdentifierList str@(c :: cs) =
 
 
 mutual
-    parseLine : List Char -> ParseResultInternal CLine
+    parseLine : SourceString -> ParseResultInternal CLine
     parseLine str = do
         str <- expect str '('
         case eatAndMatch str "Suppose " of
             (str, True) => do
                 let str = eatWhitespace str
-                (x, str) <- parseIdentifier "" str
+                (x, str) <- parseIdentifier [] str
                 let str = eatWhitespace str
                 (t, str) <- parseType_sexp str
                 let str = eatWhitespace str
@@ -217,7 +206,7 @@ mutual
                     (str, False) => error "Expected either 'Suppose' or 'Def'"
                     (str, True) => do
                         let str = eatWhitespace str
-                        (x, str) <- parseIdentifier "" str
+                        (x, str) <- parseIdentifier [] str
                         let str = eatWhitespace str
                         str <- expect str '('
                         (params, str) <- parseIdentifierList str
@@ -231,9 +220,9 @@ mutual
                         str <- expect str ')'
                         success (CLineDef (MkCDef x params e t), str)
 
-    parseBook : List Char -> ParseResultInternal CBook
+    parseBook : SourceString -> ParseResultInternal CBook
     parseBook [] = success $ ([], [])
-    parseBook (')'::rest) = success $ ([], ')'::rest)
+    parseBook str@((nx, ')') :: rest) = success $ ([], str)
     parseBook str = do
         let str2 = eatWhitespace str
         (line, str3) <- parseLine str2
@@ -242,41 +231,41 @@ mutual
         success $ (line :: rest, str5)
 
 export
-parse_unpacked : List Char -> Result CBook
+parse_unpacked : SourceString -> Result CBook
 parse_unpacked str = do
     let Right (parsed, []) = parseBook $ str
         | Left err => Left err
         | Right (parsed, remainingStr) =>
-            Left ("Remaining input not parsed: " ++ pack remainingStr)
+            Left ("Remaining input not parsed: " ++ packSource remainingStr)
     success parsed
 
 export
 parse : String -> Result CBook
-parse str = parse_unpacked (unpack str)
+parse str = parse_unpacked (unpackSource str)
 
 
 ------------------ Tests -----------------
 
 x : Identifier
-x = MkIdentifier "x"
+x = MkIdentifier $ unpackSource "x"
 
 a : Identifier
-a = MkIdentifier "a"
+a = MkIdentifier $ unpackSource "a"
 
 b : Identifier
-b = MkIdentifier "b"
+b = MkIdentifier $ unpackSource "b"
 
 c : Identifier
-c = MkIdentifier "c"
+c = MkIdentifier $ unpackSource "c"
 
 t : Identifier
-t = MkIdentifier "t"
+t = MkIdentifier $ unpackSource "t"
 
 T : Identifier
-T = MkIdentifier "T"
+T = MkIdentifier $ unpackSource "T"
 
 U : Identifier
-U = MkIdentifier "U"
+U = MkIdentifier $ unpackSource "U"
 
 x' : CExpr
 x' = CExprVariable x
