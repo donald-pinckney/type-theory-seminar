@@ -3,25 +3,21 @@ module defs.CST
 import defs.Identifier
 
 mutual
-    export
+    public export
     record CDecl where
         constructor MkCDecl
         var : Identifier
-        type : CType
+        type : CExpr
 
     public export
-    data CType
-        = CTypeStar
-        | CTypeBox
-        | CTypeArrow (Either CType CDecl) CType
-        | CTypeVariable Identifier
-
-public export
-data CExpr
-    = CExprPostulate
-    | CExprLambda (List CDecl) CExpr
-    | CExprVariable Identifier
-    | CExprApp CExpr CExpr
+    data CExpr
+        = CExprStar
+        | CExprBox
+        | CExprArrow (Either CExpr CDecl) CExpr
+        | CExprPostulate
+        | CExprLambda (List CDecl) CExpr
+        | CExprApp CExpr CExpr
+        | CExprVariable Identifier
 
 export
 record CDef where
@@ -29,7 +25,7 @@ record CDef where
     name : Identifier
     args : List Identifier
     body : CExpr
-    type : CType
+    type : CExpr
 
 mutual
     public export
@@ -55,26 +51,6 @@ implementation Show Identifier where
 
 mutual
     export
-    implementation Eq CType where
-        CTypeStar == CTypeStar = True
-        CTypeBox == CTypeBox = True
-        (CTypeArrow (Left l) y) == (CTypeArrow (Left x) w) = (l == x) && (y == w)
-        (CTypeArrow (Left l) y) == (CTypeArrow (Right r) w) = False
-        (CTypeArrow (Right r) y) == (CTypeArrow (Left l) w) = False
-        (CTypeArrow (Right r) y) == (CTypeArrow (Right x) w) = (r == x) && (y == w) -- (x == z) && (y == w)
-
-        (CTypeVariable x) == (CTypeVariable y) = x == y
-        _ == _ = False
-
-    export
-    implementation Show CType where
-        show CTypeStar = "*"
-        show CTypeBox = "BOX"
-        show (CTypeArrow (Left t) y) = "(" ++ (show t) ++ ") -> " ++ show y
-        show (CTypeArrow (Right td) y) = "(" ++ (show td) ++ ") -> " ++ show y
-        show (CTypeVariable x) = show x
-
-    export
     implementation Eq CDecl where
         (MkCDecl var type) == (MkCDecl x y) = (var == x) && (type == y)
 
@@ -82,20 +58,37 @@ mutual
     implementation Show CDecl where
         show (MkCDecl var type) = show var ++ " : " ++ show type
 
-export
-implementation Eq CExpr where
-    CExprPostulate == CExprPostulate = True
-    (CExprLambda xs x) == (CExprLambda ys y) = (xs == ys) && x == y
-    (CExprVariable x) == (CExprVariable y) = x == y
-    (CExprApp x y) == (CExprApp z w) = (x == z) && (y == w)
-    _ == _ = False
+    total
+    eq_decl_list : List CDecl -> List CDecl -> Bool
+    eq_decl_list [] [] = True
+    eq_decl_list [] (x :: xs) = False
+    eq_decl_list (x :: xs) [] = False
+    eq_decl_list (x :: xs) (y :: ys) = (x == y) && (eq_decl_list xs ys)
 
-export
-implementation Show CExpr where
-    show CExprPostulate = "POSTULATE"
-    show (CExprLambda xs x) = "\\" ++ (unwords $ map show xs) ++ " . " ++ (show x)
-    show (CExprVariable x) = show x
-    show (CExprApp x y) = "(" ++ (show x) ++ " " ++ (show y) ++ ")"
+    export
+    implementation Eq CExpr where
+        CExprPostulate == CExprPostulate = True
+        (CExprLambda xs x) == (CExprLambda ys y) = (eq_decl_list xs ys) && (x == y)
+        (CExprVariable x) == (CExprVariable y) = x == y
+        (CExprApp x y) == (CExprApp z w) = (x == z) && (y == w)
+        CExprStar == CExprStar = True
+        CExprBox == CExprBox = True
+        (CExprArrow (Left l) y) == (CExprArrow (Left x) w) = (l == x) && (y == w)
+        (CExprArrow (Left l) y) == (CExprArrow (Right r) w) = False
+        (CExprArrow (Right r) y) == (CExprArrow (Left l) w) = False
+        (CExprArrow (Right r) y) == (CExprArrow (Right x) w) = (r == x) && (y == w)
+        _ == _ = False
+
+    export
+    implementation Show CExpr where
+        show CExprPostulate = "POSTULATE"
+        show (CExprLambda xs x) = "\\" ++ (unwords $ map show xs) ++ " . " ++ (show x)
+        show (CExprVariable x) = show x
+        show (CExprApp x y) = "(" ++ (show x) ++ " " ++ (show y) ++ ")"
+        show CExprStar = "*"
+        show CExprBox = "BOX"
+        show (CExprArrow (Left t) y) = "(" ++ (show t) ++ ") -> " ++ show y
+        show (CExprArrow (Right td) y) = "(" ++ (show td) ++ ") -> " ++ show y
 
 
 export

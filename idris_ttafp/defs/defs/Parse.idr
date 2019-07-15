@@ -42,78 +42,82 @@ parseIdentifier acc vStr@((nx, cx) :: xs) =
 
 
 
-
-mutual
-    parseArrowFactor : SourceString -> ParseResultInternal (Either CType CDecl)
-    parseArrowFactor [] = error "Exepcted arrow type LHS to parse"
-    parseArrowFactor ((nx, '(') :: xs) = do
-        let xs = eatWhitespace xs
-        (t, xs) <- parseTypeOrDecl xs
-        let xs = eatWhitespace xs
-        xs <- expect xs ')'
-        pure (t, xs)
-    parseArrowFactor xs = do
-        let xs = eatWhitespace xs
-        (tv, xs) <- parseIdentifier [] xs
-        let xs = eatWhitespace xs
-        case eatAndMatch xs ":" of
-            (rest, False) => success (Left $ CTypeVariable tv, rest)
-            (rest, True) => do
-                let xs = eatWhitespace rest
-                (t, xs) <- parseType xs
-                success (Right $ MkCDecl tv t, xs)
-
-    -- *a         ->    a*
-    -- *a -> b    ->    a -> b*
-    parseTypeOrDecl : SourceString -> ParseResultInternal (Either CType CDecl)
-    parseTypeOrDecl [] = error "Expected type to parse"
-    parseTypeOrDecl xs = do
-        let xs = eatWhitespace xs
-        (t, xs) <- parseArrowFactor xs
-        let xs = eatWhitespace xs
-        case eatAndMatch xs "->" of
-            (rest, True) => do
-                (arrowRHS, rest) <- parseType (eatWhitespace rest)
-                pure (Left $ CTypeArrow t arrowRHS, rest)
-            (rest, False) => pure (t, rest)
-
-    parseType : SourceString -> ParseResultInternal CType
-    parseType xs = do
-        (t, xs) <- parseTypeOrDecl xs
-        case t of
-            Left t' => success (t', xs)
-            Right d => error "Declaration not allowed here."
-
-
-
--- *xe:a, y : b, zr:c.   ->   xe:a, *y : b, zr:c.
--- xe:a, y : b, *zr:c.   ->   xe:a, y : b, zr:c*.
-parseVarAndType : SourceString -> ParseResultInternal CDecl
-parseVarAndType xs = do
-    (v, xs) <- parseIdentifier [] xs
-    let xs = eatWhitespace xs
-    xs <- expect xs ':'
-    let xs = eatWhitespace xs
-    (t, xs) <- parseType xs
-    let xs = eatWhitespace xs
-    let xs = eatOneChar xs ','
-    let xs = eatWhitespace xs
-    pure (MkCDecl v t, xs)
-
--- *x, y, z.   ->   x, y, z.*
-parseLambdaVars : SourceString -> ParseResultInternal (List CDecl)
-parseLambdaVars ((nx, '.') :: xs) = success ([], xs)
-parseLambdaVars varsStr = do
-    (varAndType, rest) <- parseVarAndType (eatWhitespace varsStr)
-    (moreVarsAndTypes, rest2) <- parseLambdaVars rest
-    pure (varAndType :: moreVarsAndTypes, rest2)
-
+--
+-- mutual
+--     parseArrowFactor : SourceString -> ParseResultInternal (Either CType CDecl)
+--     parseArrowFactor [] = error "Exepcted arrow type LHS to parse"
+--     parseArrowFactor ((nx, '(') :: xs) = do
+--         let xs = eatWhitespace xs
+--         (t, xs) <- parseTypeOrDecl xs
+--         let xs = eatWhitespace xs
+--         xs <- expect xs ')'
+--         pure (t, xs)
+--     parseArrowFactor xs = do
+--         let xs = eatWhitespace xs
+--         (tv, xs) <- parseIdentifier [] xs
+--         let xs = eatWhitespace xs
+--         case eatAndMatch xs ":" of
+--             (rest, False) => success (Left $ CTypeVariable tv, rest)
+--             (rest, True) => do
+--                 let xs = eatWhitespace rest
+--                 (t, xs) <- parseType xs
+--                 success (Right $ MkCDecl tv t, xs)
+--
+--     -- *a         ->    a*
+--     -- *a -> b    ->    a -> b*
+--     parseTypeOrDecl : SourceString -> ParseResultInternal (Either CType CDecl)
+--     parseTypeOrDecl [] = error "Expected type to parse"
+--     parseTypeOrDecl xs = do
+--         let xs = eatWhitespace xs
+--         (t, xs) <- parseArrowFactor xs
+--         let xs = eatWhitespace xs
+--         case eatAndMatch xs "->" of
+--             (rest, True) => do
+--                 (arrowRHS, rest) <- parseType (eatWhitespace rest)
+--                 pure (Left $ CTypeArrow t arrowRHS, rest)
+--             (rest, False) => pure (t, rest)
+--
+--     parseType : SourceString -> ParseResultInternal CType
+--     parseType xs = do
+--         (t, xs) <- parseTypeOrDecl xs
+--         case t of
+--             Left t' => success (t', xs)
+--             Right d => error "Declaration not allowed here."
+--
+--
+--
 
 groupApps : CExpr -> List CExpr -> CExpr
 groupApps acc [] = acc
 groupApps acc (t :: ts) = groupApps (CExprApp acc t) ts
 
+
 mutual
+
+    -- *xe:a, y : b, zr:c.   ->   xe:a, *y : b, zr:c.
+    -- xe:a, y : b, *zr:c.   ->   xe:a, y : b, zr:c*.
+    parseVarAndType : SourceString -> ParseResultInternal CDecl
+    parseVarAndType xs = do
+        (v, xs) <- parseIdentifier [] xs
+        let xs = eatWhitespace xs
+        xs <- expect xs ':'
+        let xs = eatWhitespace xs
+        (t, xs) <- parseTerm xs
+        let xs = eatWhitespace xs
+        let xs = eatOneChar xs ','
+        let xs = eatWhitespace xs
+        pure (MkCDecl v t, xs)
+
+
+    -- *x, y, z.   ->   x, y, z.*
+    parseLambdaVars : SourceString -> ParseResultInternal (List CDecl)
+    parseLambdaVars ((nx, '.') :: xs) = success ([], xs)
+    parseLambdaVars varsStr = do
+        (varAndType, rest) <- parseVarAndType (eatWhitespace varsStr)
+        (moreVarsAndTypes, rest2) <- parseLambdaVars rest
+        pure (varAndType :: moreVarsAndTypes, rest2)
+
+
 
     -- Something like \x y z.M
     -- But this starts with '\' already removed.
@@ -124,16 +128,52 @@ mutual
         pure (CExprLambda varsAndTypes body, rest)
 
 
-    parseTermSingle : SourceString -> ParseResultInternal CExpr
-    parseTermSingle [] = error "Expected input"
-    parseTermSingle str@((nx, '\\') :: xs) = parseLambda xs
-    parseTermSingle str@((nx, '(') :: xs) = do
+    parseArrowFactor : SourceString -> ParseResultInternal (Either CExpr CDecl)
+    parseArrowFactor [] = error "Expected input"
+    parseArrowFactor str@((nx, '\\') :: xs) = case parseLambda xs of
+        (Left l) => Left l
+        (Right (e, r)) => Right (Left e, r)
+    parseArrowFactor str@((nx, '(') :: xs) = do
         (t, r1) <- parseTerm xs
-        r2 <- expect r1 ')'
-        pure (t, r2)
-    parseTermSingle str = do
+        let r1 = eatWhitespace r1
+        case eatAndMatch r1 ":" of
+            (r1, True) =>
+                case t of
+                    (CExprVariable x) => do
+                        let r1 = eatWhitespace r1
+                        (tt, r2) <- parseTerm r1
+                        let r2 = eatWhitespace r2
+                        r2 <- expect r2 ')'
+                        success (Right $ MkCDecl x tt, r2)
+                    _ => error "Variable name expected in declaration."
+            (r1, False) => do
+                r2 <- expect r1 ')'
+                pure (Left t, r2)
+    parseArrowFactor str = do
         (vStr, rest) <- parseIdentifier [] str
-        pure (CExprVariable vStr, rest)
+        pure (Left $ CExprVariable vStr, rest)
+
+
+    parseExprOrDecl : SourceString -> ParseResultInternal (Either CExpr CDecl)
+    parseExprOrDecl [] = error "Expected expr to parse"
+    parseExprOrDecl xs = do
+        let xs = eatWhitespace xs
+        (t, xs) <- parseArrowFactor xs
+        let xs = eatWhitespace xs
+        case eatAndMatch xs "->" of
+            (rest, True) => do
+                (arrowRHS, rest) <- parseTerm (eatWhitespace rest)
+                pure (Left $ CExprArrow t arrowRHS, rest)
+            (rest, False) => pure (t, rest)
+
+
+    parseAppFactor : SourceString -> ParseResultInternal CExpr
+    parseAppFactor xs = do
+        (t, xs) <- parseExprOrDecl xs
+        case t of
+            Left t' => success (t', xs)
+            Right d => error "Declaration not allowed here."
+
 
     parseTermList : SourceString -> ParseResultInternal (List CExpr)
     parseTermList [] = success ([], [])
@@ -141,7 +181,7 @@ mutual
             if not (isStartOfTerm cx) then
                 pure ([], str)
             else do
-                (t, rest) <- parseTermSingle str
+                (t, rest) <- parseAppFactor str
                 let rest2 = eatWhitespace rest
                 (ts, rest3) <- parseTermList rest2
                 pure (t :: ts, rest3)
@@ -156,7 +196,6 @@ mutual
 
 
 
-
 parseExpr_sexp : SourceString -> ParseResultInternal CExpr
 parseExpr_sexp str = do
     str <- expect str '('
@@ -164,12 +203,6 @@ parseExpr_sexp str = do
     str <- expect str ')'
     success (e, str)
 
-parseType_sexp : SourceString -> ParseResultInternal CType
-parseType_sexp str = do
-    str <- expect str '('
-    (t, str) <- parseType str
-    str <- expect str ')'
-    success (t, str)
 
 parseIdentifierList : SourceString -> ParseResultInternal (List Identifier)
 parseIdentifierList str@((nx, cx) :: cs) =
@@ -186,6 +219,7 @@ parseIdentifierList str@((nx, cx) :: cs) =
         success ([], str)
 
 
+
 mutual
     parseLine : SourceString -> ParseResultInternal CLine
     parseLine str = do
@@ -195,7 +229,7 @@ mutual
                 let str = eatWhitespace str
                 (x, str) <- parseIdentifier [] str
                 let str = eatWhitespace str
-                (t, str) <- parseType_sexp str
+                (t, str) <- parseExpr_sexp str
                 let str = eatWhitespace str
                 (b, str) <- parseBook str
                 let str = eatWhitespace str
@@ -215,7 +249,7 @@ mutual
                         let str = eatWhitespace str
                         (e, str) <- parseExpr_sexp str
                         let str = eatWhitespace str
-                        (t, str) <- parseType_sexp str
+                        (t, str) <- parseExpr_sexp str
                         let str = eatWhitespace str
                         str <- expect str ')'
                         success (CLineDef (MkCDef x params e t), str)
@@ -279,11 +313,11 @@ b' = CExprVariable b
 c' : CExpr
 c' = CExprVariable c
 
-T' : CType
-T' = CTypeVariable T
+T' : CExpr
+T' = CExprVariable T
 
-U' : CType
-U' = CTypeVariable U
+U' : CExpr
+U' = CExprVariable U
 
 export
 parseTests : IO ()
@@ -291,10 +325,10 @@ parseTests = makeTest [
     parse "" ===? [],
     parse "(Def x (a b c) (a (b c)) (T)) (Def b (a b c) (a b c) (T -> U))"
         ===? [CLineDef $ MkCDef x [a, b, c] (CExprApp a' (CExprApp b' c')) T',
-              CLineDef $ MkCDef b [a, b, c] (CExprApp (CExprApp a' b') c') (CTypeArrow (Left T') U')],
+              CLineDef $ MkCDef b [a, b, c] (CExprApp (CExprApp a' b') c') (CExprArrow (Left T') U')],
     parse "(Def x (a b c) (a (b c)) (T)) (Def b (a b c) (a b c) ((t : T) -> U))"
         ===? [CLineDef $ MkCDef x [a, b, c] (CExprApp a' (CExprApp b' c')) T',
-              CLineDef $ MkCDef b [a, b, c] (CExprApp (CExprApp a' b') c') (CTypeArrow (Right (MkCDecl t T')) U')],
+              CLineDef $ MkCDef b [a, b, c] (CExprApp (CExprApp a' b') c') (CExprArrow (Right (MkCDecl t T')) U')],
     parse "(Suppose x (T -> U) (Def x (a b c) (a (b c)) (T)))"
-        ===? [CLineSuppose (MkCDecl x (CTypeArrow (Left T') U')) [CLineDef $ MkCDef x [a, b, c] (CExprApp a' (CExprApp b' c')) T']]
+        ===? [CLineSuppose (MkCDecl x (CExprArrow (Left T') U')) [CLineDef $ MkCDef x [a, b, c] (CExprApp a' (CExprApp b' c')) T']]
 ]

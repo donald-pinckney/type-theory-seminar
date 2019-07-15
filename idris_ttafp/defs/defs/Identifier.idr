@@ -10,3 +10,7 @@ record Identifier where
 export
 text : Identifier -> String
 text = pack . (map snd) . token
+
+export
+sameIdentifier : Identifier -> Identifier -> Bool
+sameIdentifier a b = text a == text b

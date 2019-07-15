@@ -36,28 +36,28 @@ test_Shared:
 	cd Shared && \
 		idris --checkpkg shared.ipkg && \
 		idris --testpkg shared.ipkg && \
-		idris --install shared.ipkg
+		idris --install shared.ipkg > /dev/null
 
 .PHONY: test_ch1
 test_ch1:
 	cd ch1 && \
 		idris --checkpkg ch1.ipkg && \
 		idris --testpkg ch1.ipkg && \
-		idris --install ch1.ipkg
+		idris --install ch1.ipkg > /dev/null
 
 .PHONY: test_ch2
 test_ch2:
 	cd ch2 && \
 		idris --checkpkg ch2.ipkg && \
 		idris --testpkg ch2.ipkg && \
-		idris --install ch2.ipkg
+		idris --install ch2.ipkg > /dev/null
 
 .PHONY: test_defs
 test_defs:
 	cd defs && \
 		idris --checkpkg defs.ipkg && \
 		idris --testpkg defs.ipkg && \
-		idris --install defs.ipkg
+		idris --install defs.ipkg > /dev/null
 
 
 
