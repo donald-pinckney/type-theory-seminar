@@ -224,6 +224,7 @@ mutual
     parseLine : SourceString -> ParseResultInternal CLine
     parseLine str = do
         str <- expect str '('
+        let str = eatWhitespace str
         case eatAndMatch str "Suppose " of
             (str, True) => do
                 let str = eatWhitespace str
