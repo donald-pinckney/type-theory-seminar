@@ -122,12 +122,20 @@ mutual
         show AExprBox = "BOX"
         show (AExprArrow x y) = "(" ++ show x ++ ") -> " ++ show y
 
+
+joinStr : List String -> String
+joinStr [] = ""
+joinStr (x :: xs) = x ++ (joinStr xs)
+
+makeTabs : Nat -> String
+makeTabs n = joinStr $ take n (repeat "    ")
+
 Show (ADef envLen contextLen) where
-    show (MkADef body type sourceId sourceArgs) = show sourceId ++ "(" ++ show sourceArgs ++ ") := " ++ show body ++ " : " ++ show type
+    show (MkADef body type sourceId sourceArgs) = makeTabs contextLen ++ show sourceId ++ "(" ++ show sourceArgs ++ ") := " ++ show body ++ " : " ++ show type
 
 mutual
     Show (ASuppose envLen contextLen) where
-        show (MkASuppose decl body) = "(Suppose " ++ show decl ++ show body ++ ")"
+        show (MkASuppose decl body) = makeTabs contextLen ++ "(Suppose " ++ show decl ++ "\n" ++ show body ++ ")"
 
     Show (ABook envLen contextLen) where
         show (ABookConsSuppose x y) = show x ++ "\n" ++ show y
