@@ -9,11 +9,6 @@ record DeBruijnIdentifier (len : Nat) where
     deBruijn : Fin len
     sourceId : Identifier
 
-public export
-data ResolvedIdentifier : (envLen : Nat) -> (contextLen : Nat) -> Type where
-    Definition : DeBruijnIdentifier envLen -> ResolvedIdentifier envLen contextLen
-    Context : DeBruijnIdentifier contextLen -> ResolvedIdentifier envLen contextLen
-
 mutual
     public export
     record ADecl (envLen : Nat) (contextLen : Nat) where
@@ -25,8 +20,9 @@ mutual
     data AExpr : (envLen : Nat) -> (contextLen : Nat) -> Type where
         AExprPostulate : AExpr envLen contextLen
         AExprLambda : ADecl envLen contextLen -> AExpr envLen (S contextLen) -> AExpr envLen contextLen
-        AExprVariable : ResolvedIdentifier envLen contextLen -> AExpr envLen contextLen
+        AExprVariable : DeBruijnIdentifier contextLen -> AExpr envLen contextLen
         AExprApp : AExpr envLen contextLen -> AExpr envLen contextLen -> AExpr envLen contextLen
+        AExprDefApp : DeBruijnIdentifier envLen -> List (AExpr envLen contextLen) -> AExpr envLen contextLen
         AExprStar : AExpr envLen contextLen
         AExprBox : AExpr envLen contextLen
         AExprArrow : ADecl envLen contextLen -> AExpr envLen (S contextLen) -> AExpr envLen contextLen
@@ -65,14 +61,10 @@ ARootBook = ABook Z Z
 ----------- Interface Implementations ------------
 
 %access export
+%default covering
 
 Eq (DeBruijnIdentifier len) where
     (MkDeBruijnIdentifier deBruijn sourceId) == (MkDeBruijnIdentifier x y) = deBruijn == x
-
-Eq (ResolvedIdentifier envLen contextLen) where
-    (Definition x) == (Definition y) = x == y
-    (Context x) == (Context y) = x == y
-    _ == _ = False
 
 mutual
     Eq (ADecl envLen contextLen) where
@@ -102,40 +94,42 @@ mutual
         _ == _ = False
 
 
-Show (DeBruijnIdentifier len) where
-    show (MkDeBruijnIdentifier deBruijn sourceId) = (show sourceId) ++ " {" ++ (show $ finToNat deBruijn) ++ "}"
 
-Show (ResolvedIdentifier envLen contextLen) where
-    show (Definition x) = show x ++ "D"
-    show (Context x) = show x ++ "C"
+joinStrBy : String -> List String -> String
+joinStrBy j [] = ""
+joinStrBy j [x] = x
+joinStrBy j (x :: xs) = x ++ j ++ (joinStrBy j xs)
+
+showList : Show a => List a -> String
+showList xs = joinStrBy ", " $ map show xs
+
+Show (DeBruijnIdentifier len) where
+    show (MkDeBruijnIdentifier deBruijn sourceId) = (show sourceId) ++ "↑" ++ (show $ finToNat deBruijn)
 
 mutual
     Show (ADecl envLen contextLen) where
         show (MkADecl type sourceId) = (show sourceId) ++ " : " ++ (show type)
 
     Show (AExpr envLen contextLen) where
-        show AExprPostulate = "POSTULATE"
+        show AExprPostulate = "?"
         show (AExprLambda x y) = "\\" ++ show x ++ " . " ++ show y
         show (AExprVariable x) = show x
         show (AExprApp x y) = "(" ++ show x ++ ") (" ++ show y ++ ")"
+        show (AExprDefApp d args) = show d ++ " {" ++ showList args ++ "}"
         show AExprStar = "*"
-        show AExprBox = "BOX"
+        show AExprBox = "[]"
         show (AExprArrow x y) = "(" ++ show x ++ ") -> " ++ show y
 
 
-joinStr : List String -> String
-joinStr [] = ""
-joinStr (x :: xs) = x ++ (joinStr xs)
-
 makeTabs : Nat -> String
-makeTabs n = joinStr $ take n (repeat "    ")
+makeTabs n = joinStrBy "" $ take n (repeat "    ")
 
 Show (ADef envLen contextLen) where
-    show (MkADef body type sourceId sourceArgs) = makeTabs contextLen ++ show sourceId ++ "(" ++ show sourceArgs ++ ") := " ++ show body ++ " : " ++ show type
+    show (MkADef body type sourceId sourceArgs) = makeTabs contextLen ++ show sourceId ++ "{" ++ showList sourceArgs ++ "} := " ++ show body ++ " : " ++ show type
 
 mutual
     Show (ASuppose envLen contextLen) where
-        show (MkASuppose decl body) = makeTabs contextLen ++ "(Suppose " ++ show decl ++ "\n" ++ show body ++ ")"
+        show (MkASuppose decl body) = makeTabs contextLen ++ "Suppose " ++ show decl ++ "\n" ++ show body
 
     Show (ABook envLen contextLen) where
         show (ABookConsSuppose x y) = show x ++ "\n" ++ show y

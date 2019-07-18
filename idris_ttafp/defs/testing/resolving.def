@@ -10,6 +10,6 @@
         Suppose y (T)
             (Def weird (T U y) (\x:T.x y) (T -> U))
             (Def weird2 (T U y) (weird {T, U, y}) (U))
-            (Def weird3 (T U y) (weird weird2) (U))
+            (Def weird3 (T U y) (weird {weird2 {}}) (U))
     )
 ))

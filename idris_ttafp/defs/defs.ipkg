@@ -6,7 +6,6 @@ modules = defs.AST
     , defs.CST
     , defs.Identifier
     , defs.Parse
-    , defs.PrettyPrint
     , defs.Repl
     , defs.Resolve
     , defs.DefsMain

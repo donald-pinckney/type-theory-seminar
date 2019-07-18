@@ -141,13 +141,14 @@ mutual
     parseCommaTermList : SourceString -> ParseResultInternal (List (CExpr))
     parseCommaTermList str = do
         let str = eatWhitespace str
-        (e, str) <- parseTerm str
-        let str = eatWhitespace str
-        case eatAndMatch str "," of
-            (str, True) => do
-                (es, str) <- parseCommaTermList str
-                success (e :: es, str)
-            (str, False) => success ([e], str)
+        if not (any (isStartOfTerm . snd) (head' str)) then success ([], str) else do
+            (e, str) <- parseTerm str
+            let str = eatWhitespace str
+            case eatAndMatch str "," of
+                (str, True) => do
+                    (es, str) <- parseCommaTermList str
+                    success (e :: es, str)
+                (str, False) => success ([e], str)
 
     parseArrowFactor : SourceString -> ParseResultInternal (Either CExpr CDecl)
     parseArrowFactor [] = error "Expected input"

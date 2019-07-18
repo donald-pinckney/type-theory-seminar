@@ -1,6 +1,6 @@
 .PHONY: build
 # build: build_Shared build_ch1 build_ch2 build_defs
-build: build_defs
+build: build_Shared build_defs
 	idris --build main.ipkg
 
 .PHONY: build_Shared
