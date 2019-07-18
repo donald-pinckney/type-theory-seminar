@@ -21,7 +21,7 @@ isVarChar c = isAlpha c || isDigit c || (
         || (91 == n)
         || (93 == n)
         || (94 <= n && n <= 96)
-        || (123 <= n && n <= 126)
+        || (124 == n)
 )
 
 isVarCharStart : Char -> Bool
@@ -30,11 +30,12 @@ isVarCharStart c = (isVarChar c) && (
     (n /= 91)
         && (n /= 42)
         && (n /= 63)
+        && (n /= 123)
 
 )
 
 isStartOfTerm : Char -> Bool
-isStartOfTerm c = isVarCharStart c || c == '(' || c == '\\' || c == '*' || c == '[' || c == '?'
+isStartOfTerm c = isVarCharStart c || c == '(' || c == '\\' || c == '*' || c == '[' || c == '?' || c == '{'
 
 parseIdentifier : SourceString -> SourceString -> ParseResultInternal Identifier
 parseIdentifier acc [] = success (MkIdentifier acc, [])
@@ -137,11 +138,27 @@ mutual
         pure (CExprLambda varsAndTypes body, rest)
 
 
+    parseCommaTermList : SourceString -> ParseResultInternal (List (CExpr))
+    parseCommaTermList str = do
+        let str = eatWhitespace str
+        (e, str) <- parseTerm str
+        let str = eatWhitespace str
+        case eatAndMatch str "," of
+            (str, True) => do
+                (es, str) <- parseCommaTermList str
+                success (e :: es, str)
+            (str, False) => success ([e], str)
+
     parseArrowFactor : SourceString -> ParseResultInternal (Either CExpr CDecl)
     parseArrowFactor [] = error "Expected input"
     parseArrowFactor str@((nx, '*') :: xs) = success (Left CExprStar, xs)
     parseArrowFactor str@((nx, '?') :: xs) = success (Left CExprPostulate, xs)
     parseArrowFactor str@((nx, '[') :: (nx', ']') :: xs) = success (Left CExprBox, xs)
+    parseArrowFactor str@((nx, '{') :: xs) = do
+        (args, xs) <- parseCommaTermList xs
+        let xs = eatWhitespace xs
+        xs <- expect xs '}'
+        success (Left $ CExprDefArgs args, xs)
     parseArrowFactor str@((nx, '\\') :: xs) = case parseLambda xs of
         (Left l) => Left l
         (Right (e, r)) => Right (Left e, r)
@@ -160,7 +177,7 @@ mutual
                     _ => error "Variable name expected in declaration."
             (r1, False) => do
                 r2 <- expect r1 ')'
-                pure (Left t, r2)
+                success (Left t, r2)
     parseArrowFactor str = do
         (vStr, rest) <- parseIdentifier [] str
         success (Left $ CExprVariable vStr, rest)

@@ -18,6 +18,7 @@ mutual
         | CExprLambda (List CDecl) CExpr
         | CExprApp CExpr CExpr
         | CExprVariable Identifier
+        | CExprDefArgs (List CExpr)
 
 export
 record CDef where
@@ -56,7 +57,14 @@ mutual
     eq_decl_list (x :: xs) [] = False
     eq_decl_list (x :: xs) (y :: ys) = (x == y) && (eq_decl_list xs ys)
 
-    export
+
+    total
+    expr_lists_eq : List CExpr -> List CExpr -> Bool
+    expr_lists_eq [] [] = True
+    expr_lists_eq [] (x :: xs) = False
+    expr_lists_eq (x :: xs) [] = False
+    expr_lists_eq (x :: xs) (y :: ys) = (x == y) && (expr_lists_eq xs ys)
+
     implementation Eq CExpr where
         CExprPostulate == CExprPostulate = True
         (CExprLambda xs x) == (CExprLambda ys y) = (eq_decl_list xs ys) && (x == y)
@@ -64,11 +72,14 @@ mutual
         (CExprApp x y) == (CExprApp z w) = (x == z) && (y == w)
         CExprStar == CExprStar = True
         CExprBox == CExprBox = True
+        (CExprDefArgs xs) == (CExprDefArgs ys) = expr_lists_eq xs ys
         (CExprArrow (Left l) y) == (CExprArrow (Left x) w) = (l == x) && (y == w)
         (CExprArrow (Left l) y) == (CExprArrow (Right r) w) = False
         (CExprArrow (Right r) y) == (CExprArrow (Left l) w) = False
         (CExprArrow (Right r) y) == (CExprArrow (Right x) w) = (r == x) && (y == w)
         _ == _ = False
+
+
 
     export
     implementation Show CExpr where
@@ -78,6 +89,7 @@ mutual
         show (CExprApp x y) = "(" ++ (show x) ++ " " ++ (show y) ++ ")"
         show CExprStar = "*"
         show CExprBox = "BOX"
+        show (CExprDefArgs args) = "{" ++ show args ++ "}"
         show (CExprArrow (Left t) y) = "(" ++ (show t) ++ ") -> " ++ show y
         show (CExprArrow (Right td) y) = "(" ++ (show td) ++ ") -> " ++ show y
 

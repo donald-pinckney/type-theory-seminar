@@ -2,10 +2,11 @@ module Main
 
 import ch1.Repl
 import ch2.Repl
+import defs.DefsMain
 
 
 main : IO ()
-main = replCh1
+main = defs_main
 
 
 export

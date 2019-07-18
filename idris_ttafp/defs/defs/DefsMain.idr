@@ -1,4 +1,4 @@
-module defs.Main
+module defs.DefsMain
 
 import defs.Parse
 import Result
@@ -7,8 +7,8 @@ import defs.Resolve
 import defs.AST
 
 export
-defs_main : String -> IO ()
-defs_main path = do
+defs_main_path : String -> IO ()
+defs_main_path path = do
     Right str <- readFile path
         | Left err => putStrLn (path ++ ": " ++ show err)
 
@@ -22,11 +22,11 @@ defs_main path = do
 
     -- pure ()
 export
-main : IO ()
-main = do
+defs_main : IO ()
+defs_main = do
     args <- getArgs
     case inBounds 1 args of
         (Yes prf) =>
             let path = index 1 args in
-            defs_main path
+            defs_main_path path
         (No contra) => putStrLn "filename argument expected."
