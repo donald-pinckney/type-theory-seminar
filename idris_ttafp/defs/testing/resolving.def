@@ -1,13 +1,14 @@
 (Suppose T (*) (
     Suppose x (T) (
-        Def d (x y) (x y) (V)
+        Def d (T x) (x x) (T)
     )
 ))
 
 
-
-(Suppose x (T) (
-    Suppose y (U) (
-        Def e (x y) (x y) (V)
+(Suppose T (*) (
+    Suppose U (*) (
+        Suppose y (U) (
+            Def const (T U y) (\x:T.y) (T -> U)
+        )
     )
 ))

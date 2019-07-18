@@ -24,8 +24,17 @@ isVarChar c = isAlpha c || isDigit c || (
         || (123 <= n && n <= 126)
 )
 
+isVarCharStart : Char -> Bool
+isVarCharStart c = (isVarChar c) && (
+    let n = ord c in
+    (n /= 91)
+        && (n /= 42)
+        && (n /= 63)
+
+)
+
 isStartOfTerm : Char -> Bool
-isStartOfTerm c = isVarChar c || c == '(' || c == '\\'
+isStartOfTerm c = isVarCharStart c || c == '(' || c == '\\' || c == '*' || c == '[' || c == '?'
 
 parseIdentifier : SourceString -> SourceString -> ParseResultInternal Identifier
 parseIdentifier acc [] = success (MkIdentifier acc, [])
@@ -130,6 +139,9 @@ mutual
 
     parseArrowFactor : SourceString -> ParseResultInternal (Either CExpr CDecl)
     parseArrowFactor [] = error "Expected input"
+    parseArrowFactor str@((nx, '*') :: xs) = success (Left CExprStar, xs)
+    parseArrowFactor str@((nx, '?') :: xs) = success (Left CExprPostulate, xs)
+    parseArrowFactor str@((nx, '[') :: (nx', ']') :: xs) = success (Left CExprBox, xs)
     parseArrowFactor str@((nx, '\\') :: xs) = case parseLambda xs of
         (Left l) => Left l
         (Right (e, r)) => Right (Left e, r)
@@ -151,7 +163,7 @@ mutual
                 pure (Left t, r2)
     parseArrowFactor str = do
         (vStr, rest) <- parseIdentifier [] str
-        pure (Left $ CExprVariable vStr, rest)
+        success (Left $ CExprVariable vStr, rest)
 
 
     parseExprOrDecl : SourceString -> ParseResultInternal (Either CExpr CDecl)
@@ -208,7 +220,7 @@ parseIdentifierList : SourceString -> ParseResultInternal (List Identifier)
 parseIdentifierList str@((nx, cx) :: cs) =
     if isWhitespace cx then
         parseIdentifierList (eatWhitespace str)
-    else if isVarChar cx then
+    else if isVarCharStart cx then
         do
             (x, str) <- parseIdentifier [] str
             let str = eatWhitespace str

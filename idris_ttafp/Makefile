@@ -58,8 +58,8 @@ test_defs:
 	cd defs && \
 		idris --checkpkg defs.ipkg && \
 		idris --testpkg defs.ipkg && \
-		idris --install defs.ipkg > /dev/null && \
-		mv defs_main ..
+		idris --install defs.ipkg > /dev/null
+	-mv defs/defs_main .
 
 
 
@@ -86,7 +86,7 @@ clean_ch2:
 clean_defs:
 	cd defs && \
 		idris --clean defs.ipkg
-	rm defs_main
+	-rm defs_main
 
 .PHONY: run
 run:	build

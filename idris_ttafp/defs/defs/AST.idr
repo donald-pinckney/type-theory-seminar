@@ -103,7 +103,7 @@ mutual
 
 
 Show (DeBruijnIdentifier len) where
-    show (MkDeBruijnIdentifier deBruijn sourceId) = (show sourceId) ++ " [" ++ (show $ finToNat deBruijn) ++ "]"
+    show (MkDeBruijnIdentifier deBruijn sourceId) = (show sourceId) ++ " {" ++ (show $ finToNat deBruijn) ++ "}"
 
 Show (ResolvedIdentifier envLen contextLen) where
     show (Definition x) = show x ++ "D"

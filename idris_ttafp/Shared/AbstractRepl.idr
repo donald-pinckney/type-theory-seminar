@@ -16,7 +16,7 @@ firstWordSplit xs =
     let words = split (\p => snd p == ' ') xs in
     case words of
         [] => error "Expected word"
-        (w :: ws) => ?qwertwert --success (w, joinBy ws ' ')
+        (w :: ws) => success (w, joinBy ws (0, ' '))
 
 
 
