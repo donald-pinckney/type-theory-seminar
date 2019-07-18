@@ -40,15 +40,6 @@ mutual
 
 --------- INTERFACE IMPLEMENTATIONS -------------
 
-
-export
-implementation Eq Identifier where
-    id1 == id2 = text id1 == text id2
-
-export
-implementation Show Identifier where
-    show id = text id
-
 mutual
     export
     implementation Eq CDecl where
