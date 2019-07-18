@@ -132,6 +132,6 @@ mutual
         show (MkASuppose decl body) = makeTabs contextLen ++ "Suppose " ++ show decl ++ "\n" ++ show body
 
     Show (ABook envLen contextLen) where
-        show (ABookConsSuppose x y) = show x ++ "\n" ++ show y
-        show (ABookConsDef x y) = show x ++ "\n" ++ show y
+        show (ABookConsSuppose x y) = show x ++ (if y == ABookNil then "" else "\n\n") ++ show y
+        show (ABookConsDef x y) = show x ++ (if y == ABookNil then "" else "\n") ++ show y
         show ABookNil = ""
