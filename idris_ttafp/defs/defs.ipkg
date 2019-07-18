@@ -9,5 +9,8 @@ modules = defs.AST
     , defs.PrettyPrint
     , defs.Repl
     , defs.Resolve
+    , defs.Main
 
 tests = defs.Parse.parseTests
+executable = defs_main
+main = defs.Main
