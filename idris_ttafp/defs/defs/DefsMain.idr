@@ -5,6 +5,7 @@ import Result
 import defs.CST
 import defs.Resolve
 import defs.AST
+import defs.TypeCheck
 
 export
 defs_main_path : String -> IO ()
@@ -17,6 +18,9 @@ defs_main_path path = do
 
     let Right ast = resolve cst
         | Left err => putStrLn ("Resolve error: " ++ err)
+
+    let Right () = type_check_main ast
+        | Left err => putStrLn ("Type checking error: " ++ err)
 
     putStrLn (show ast)
 
