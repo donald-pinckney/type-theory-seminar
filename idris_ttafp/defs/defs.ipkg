@@ -2,7 +2,8 @@ package defs
 
 pkgs = shared
 
-modules = defs.AST
+modules = Main
+    , defs.AST
     , defs.CST
     , defs.Identifier
     , defs.Parse
@@ -12,5 +13,8 @@ modules = defs.AST
     , defs.Judgments
     , defs.TypeCheck
     , defs.DerivationRules
+
+executable = main
+main = Main
 
 tests = defs.Parse.parseTests
