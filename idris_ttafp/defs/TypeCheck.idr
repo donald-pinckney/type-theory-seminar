@@ -9,6 +9,7 @@ import Shared.Result
 
 %default total
 
+
 -- There are no derivation rules, so any judgment holding is a contradiction
 Uninhabited (Holds j) where
 

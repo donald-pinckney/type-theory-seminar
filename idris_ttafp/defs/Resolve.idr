@@ -20,7 +20,7 @@ ResolveResultRoot = ResolveResult (Z, Z)
 
 
 total
-addToEnv : Env n -> Context m -> Identifier -> Result (Env (S n))
+addToEnv : EnvNames n -> ContextNames m -> Identifier -> Result (EnvNames (S n))
 addToEnv env context x =
     if any (sameIdentifier x) env || any (sameIdentifier x) context then
         Left $ "Can not redefine '" ++ (text x) ++ "'"
@@ -28,7 +28,7 @@ addToEnv env context x =
         Right $ x :: env
 
 total
-addToContext : Env n -> Context m -> Identifier -> Result (Context (S m))
+addToContext : EnvNames n -> ContextNames m -> Identifier -> Result (ContextNames (S m))
 addToContext env context x =
     if any (sameIdentifier x) env || any (sameIdentifier x) context then
         Left $ "Can not redefine '" ++ (text x) ++ "'"
@@ -36,7 +36,7 @@ addToContext env context x =
         Right $ x :: context
 
 total
-lookupId : Env k -> Identifier -> Maybe (Fin k)
+lookupId : EnvNames k -> Identifier -> Maybe (Fin k)
 lookupId [] x = Nothing
 lookupId (y :: xs) x =
     if x == y then
@@ -45,27 +45,27 @@ lookupId (y :: xs) x =
         FS <$> lookupId xs x
 
 
-resolveVar : Env envLen -> Context contextLen -> Identifier -> Result (DeBruijnIdentifier contextLen)
+resolveVar : EnvNames envLen -> ContextNames contextLen -> Identifier -> Result (DeBruijnIdentifier contextLen)
 resolveVar envDefs contextVars x =
     case lookupId contextVars x of
         (Just idx) => success $ MkDeBruijnIdentifier idx x
         Nothing => error $ "Use of undeclared variable: " ++ (show x)
 
-resolveDefinition : Env envLen -> Context contextLen -> Identifier -> Result (DeBruijnIdentifier envLen)
+resolveDefinition : EnvNames envLen -> ContextNames contextLen -> Identifier -> Result (DeBruijnIdentifier envLen)
 resolveDefinition envDefs contextVars x =
     case lookupId envDefs x of
         (Just idx) => success $ MkDeBruijnIdentifier idx x
         Nothing => error $ "Use of undeclared definition: " ++ (show x)
 
 mutual
-    resolveExprList : Nat -> Env envLen -> Context contextLen -> List CExpr -> Result (List (AExpr (envLen, contextLen)), Nat)
+    resolveExprList : Nat -> EnvNames envLen -> ContextNames contextLen -> List CExpr -> Result (List (AExpr (envLen, contextLen)), Nat)
     resolveExprList uniqueId envDefs contextVars [] = success ([], uniqueId)
     resolveExprList uniqueId envDefs contextVars (x :: xs) = do
         (x', uniqueId) <- resolveExpr uniqueId envDefs contextVars x
         (xs', uniqueId) <- resolveExprList uniqueId envDefs contextVars xs
         success (x' :: xs', uniqueId)
 
-    resolveExpr : Nat -> Env envLen -> Context contextLen -> CExpr -> Result (AExpr (envLen, contextLen), Nat)
+    resolveExpr : Nat -> EnvNames envLen -> ContextNames contextLen -> CExpr -> Result (AExpr (envLen, contextLen), Nat)
     resolveExpr uniqueId envDefs contextVars CExprStar = success (AExprStar, uniqueId)
     resolveExpr uniqueId envDefs contextVars CExprBox = success (AExprBox, uniqueId)
     resolveExpr uniqueId envDefs contextVars CExprPostulate = success (AExprPostulate, uniqueId)
@@ -104,12 +104,12 @@ mutual
 
 
 
-resolveDecl : Nat -> Env envLen -> Context contextLen -> CDecl -> Result (ADecl (envLen, contextLen), Nat)
+resolveDecl : Nat -> EnvNames envLen -> ContextNames contextLen -> CDecl -> Result (ADecl (envLen, contextLen), Nat)
 resolveDecl uniqueId envDefs contextVars (MkCDecl var type) = do
     (t, uniqueId) <- resolveExpr uniqueId envDefs contextVars type
     success (MkADecl t var, uniqueId)
 
-resolveDef : Nat -> Env envLen -> Context contextLen -> CDef -> Result (ADef (envLen, contextLen), Nat)
+resolveDef : Nat -> EnvNames envLen -> ContextNames contextLen -> CDef -> Result (ADef (envLen, contextLen), Nat)
 resolveDef uniqueId envDefs contextVars (MkCDef name args body type) =
     if toList contextVars /= reverse args then
         error $ "The context and def params should be the same!"
@@ -118,7 +118,7 @@ resolveDef uniqueId envDefs contextVars (MkCDef name args body type) =
         (aType, uniqueId) <- resolveExpr uniqueId envDefs contextVars type
         success (MkADef aBody aType name args, uniqueId)
 
-resolveMain : Nat -> Env envLen -> Context contextLen -> CBook -> Result (ABook (envLen, contextLen), Nat)
+resolveMain : Nat -> EnvNames envLen -> ContextNames contextLen -> CBook -> Result (ABook (envLen, contextLen), Nat)
 resolveMain uniqueId envDefs contextVars [] = success (ABookNil, uniqueId)
 resolveMain uniqueId envDefs contextVars ((CLineDef (MkCDef name args body type)) :: restLines) = do
     extendedEnv <- addToEnv envDefs contextVars name

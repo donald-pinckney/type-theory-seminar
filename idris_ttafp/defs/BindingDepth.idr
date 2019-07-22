@@ -3,6 +3,8 @@ module defs.Environments
 import Data.Vect
 import defs.Identifier
 
+%default total
+
 public export
 BindingDepth : Type
 BindingDepth = (Nat, Nat)
@@ -25,9 +27,9 @@ ctxDepth = snd
 
 
 public export
-Env : Nat -> Type
-Env n = Vect n Identifier
+EnvNames : Nat -> Type
+EnvNames n = Vect n Identifier
 
 public export
-Context : Nat -> Type
-Context n = Vect n Identifier
+ContextNames : Nat -> Type
+ContextNames n = Vect n Identifier
