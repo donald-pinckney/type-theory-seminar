@@ -19,12 +19,13 @@ defs_main_path path = do
     let Right ast = resolve cst
         | Left err => putStrLn ("Resolve error: " ++ err)
 
+    putStrLn (show ast)
+
     let Right () = type_check_main ast
         | Left err => putStrLn ("Type checking error: " ++ err)
 
-    putStrLn (show ast)
+    putStrLn "Type checking ok."
 
-    -- pure ()
 export
 defs_main : IO ()
 defs_main = do
