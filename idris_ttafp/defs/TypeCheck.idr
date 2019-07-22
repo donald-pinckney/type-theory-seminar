@@ -19,11 +19,11 @@ type_check j = No absurd
 
 
 export
-type_check_main : ABook depth -> Result ()
+type_check_main : ABook (ed, Z) -> Result ()
 type_check_main ABookNil = success ()
 type_check_main (ABookConsSuppose x y) = error "Suppose checking is not implemented!"
 type_check_main (ABookConsDef (MkADef body type sourceId sourceArgs) rest_book) =
-    let j = MkTypeJudgment body type in
+    let j = MkTypeJudgment [] body type in
     case type_check j of
         (Yes prf) => type_check_main rest_book
         (No contra) => error "Failed to type check: "
