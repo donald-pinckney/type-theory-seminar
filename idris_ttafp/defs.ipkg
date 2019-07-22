@@ -1,6 +1,6 @@
 package defs
 
-pkgs = baseline
+--pkgs = baseline
 
 modules = defs, Shared
 
