@@ -1,4 +1,4 @@
-module Tests
+module Shared.Tests
 
 export
 sharedTests : IO ()

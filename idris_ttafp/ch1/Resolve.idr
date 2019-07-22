@@ -1,21 +1,15 @@
-module ch2.Resolve
+module ch1.Resolve
 
-import ch2.AST
-import ch2.Parse
+import ch1.AST
+import ch1.Parse
 import Debug.Error
-import Result
-import ParseUtils
+import Shared.Result
+import Shared.ParseUtils
 
 
 public export
 ResolveResult : Type
 ResolveResult = Result AST.Term
-
-
-resolveType : ParsedType -> Type'
-resolveType (TypeVariable v) = VarType $ FreeType v
-resolveType (TypeArrow a b) = Arrow (resolveType a) (resolveType b)
-
 
 
 total
@@ -40,10 +34,10 @@ resolveMain vars (App x y) = do
     pure $ App x' y'
 
 resolveMain vars (Lambda [] body) = Left $ "Invalid parse, lambda term must have at least 1 parameter."
-resolveMain vars (Lambda ((v, t) :: []) body) = do
-    vars' <- addVar vars v
+resolveMain vars (Lambda (x :: []) body) = do
+    vars' <- addVar vars x
     body' <- resolveMain vars' body
-    pure $ AST.Lambda (resolveType t) body'
+    pure $ AST.Lambda body'
 
 resolveMain vars (Lambda (x :: (y :: xs)) body) = resolveMain vars (Lambda [x] (Lambda (y :: xs) body))
 

@@ -5,7 +5,7 @@ import ch2.Context
 import ch2.ContextLookup
 import ch2.Judgments
 import ch2.DerivationRules
-import ElemAtIdx
+import Shared.ElemAtIdx
 import Data.So
 
 %default total

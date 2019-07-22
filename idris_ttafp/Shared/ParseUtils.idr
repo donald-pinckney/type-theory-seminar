@@ -1,7 +1,7 @@
-module ParseUtils
+module Shared.ParseUtils
 
 import Data.Vect
-import Result
+import Shared.Result
 
 public export
 SourceString : Type

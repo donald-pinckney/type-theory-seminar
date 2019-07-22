@@ -1,13 +1,13 @@
 module ch1.Repl
 
-import AbstractRepl
-import Result
+import Shared.AbstractRepl
+import Shared.Result
 import ch1.AST
 import ch1.BetaNormalForm
 import ch1.BetaReduction
 import ch1.PrettyPrint
 import ch1.Resolve
-import ParseUtils
+import Shared.ParseUtils
 
 ReplState : Type
 ReplState = ()

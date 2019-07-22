@@ -1,4 +1,4 @@
-module Result
+module Shared.Result
 
 public export
 Result : Type -> Type

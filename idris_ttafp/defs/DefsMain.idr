@@ -1,7 +1,7 @@
 module defs.DefsMain
 
 import defs.Parse
-import Result
+import Shared.Result
 import defs.CST
 import defs.Resolve
 import defs.AST

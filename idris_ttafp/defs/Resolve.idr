@@ -5,8 +5,8 @@ import defs.CST
 import defs.Parse
 import defs.Identifier
 import defs.Environments
-import Result
-import ParseUtils
+import Shared.Result
+import Shared.ParseUtils
 import Data.Vect
 
 

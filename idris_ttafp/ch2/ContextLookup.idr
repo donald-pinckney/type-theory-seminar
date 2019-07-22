@@ -1,6 +1,6 @@
 module ch2.ContextLookup
 
-import ElemAtIdx
+import Shared.ElemAtIdx
 import ch2.Context
 import ch2.AST
 

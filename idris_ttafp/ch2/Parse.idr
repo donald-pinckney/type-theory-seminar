@@ -1,8 +1,8 @@
 module ch2.Parse
 
-import ParseUtils
-import Result
-import TestingSupport
+import Shared.ParseUtils
+import Shared.Result
+import Shared.TestingSupport
 
 public export
 data ParsedType =

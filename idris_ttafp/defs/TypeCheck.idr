@@ -4,7 +4,7 @@ import defs.AST
 import defs.DerivationRules
 import defs.Judgments
 import defs.Identifier
-import Result
+import Shared.Result
 
 %default total
 

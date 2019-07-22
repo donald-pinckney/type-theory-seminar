@@ -1,6 +1,6 @@
-module TestingSupport
+module Shared.TestingSupport
 
-import Result
+import Shared.Result
 
 infixl 4 ===
 infixl 4 /==

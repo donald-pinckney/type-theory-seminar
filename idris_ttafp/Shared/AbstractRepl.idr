@@ -1,8 +1,8 @@
-module AbstractRepl
+module Shared.AbstractRepl
 
-import ParseUtils
-import Result
-import BaselineRepl
+import Shared.ParseUtils
+import Shared.Result
+import Shared.BaselineRepl
 
 -- First, just some random util stuff
 

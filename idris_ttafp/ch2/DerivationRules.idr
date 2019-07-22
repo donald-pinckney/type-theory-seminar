@@ -3,7 +3,7 @@ module ch2.DerivationRules
 import ch2.Context
 import ch2.Judgments
 import ch2.AST
-import ElemAtIdx
+import Shared.ElemAtIdx
 
 %default total
 

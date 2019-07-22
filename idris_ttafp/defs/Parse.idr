@@ -1,8 +1,8 @@
 module defs.Parse
 
-import ParseUtils
-import Result
-import TestingSupport
+import Shared.ParseUtils
+import Shared.Result
+import Shared.TestingSupport
 import defs.CST
 import defs.Identifier
 

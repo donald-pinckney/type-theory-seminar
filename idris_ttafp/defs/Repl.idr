@@ -1,7 +1,7 @@
 module defs.Repl
 
-import AbstractRepl
-import Result
+import Shared.AbstractRepl
+import Shared.Result
 import defs.AST
 -- import ch2.BetaNormalForm
 -- import ch2.BetaReduction

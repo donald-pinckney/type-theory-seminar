@@ -1,6 +1,6 @@
 module defs.Identifier
 
-import ParseUtils
+import Shared.ParseUtils
 
 export
 record Identifier where
