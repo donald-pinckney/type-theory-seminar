@@ -1,0 +1,8 @@
+package defs
+
+pkgs = baseline
+
+modules = defs, Shared
+
+executable = defs_main
+main = defs.Main

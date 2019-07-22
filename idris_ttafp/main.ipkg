@@ -1,13 +1,10 @@
 package main
 
-pkgs = baseline
+pkgs = baseline, ch1, ch2, defs
 
 modules = ch1, ch2, defs, Shared
 
 executable = main
 main = Main
-
-executable = defs_main
-main = defs.Main
 
 -- tests = Main.mainTests

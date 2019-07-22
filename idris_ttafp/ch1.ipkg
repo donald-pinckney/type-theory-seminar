@@ -1,0 +1,10 @@
+package ch1
+
+pkgs = baseline
+
+modules = ch1, Shared
+
+executable = ch1_main
+main = ch1.Main
+
+-- tests = Main.mainTests

@@ -1,0 +1,8 @@
+package ch2
+
+pkgs = baseline
+
+modules = ch2, Shared
+
+executable = ch2_main
+main = ch2.Main
