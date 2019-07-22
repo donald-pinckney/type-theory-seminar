@@ -22,7 +22,7 @@ firstWordSplit xs =
 
 public export
 ReplCommand : Type -> Type
-ReplCommand stateType = stateType -> Result (Maybe (String, stateType))
+ReplCommand stateType = stateType -> IO (Result (Maybe (String, stateType)))
 
 public export
 record CommandBuilder stateType where
@@ -38,15 +38,15 @@ helpRow (MkCommandBuilder commandStrs buildFn argStrs docStrs) =
     commandsStr ++ " " ++ argStrs ++ "\r\n\t" ++ docStrs
 
 
-execReplCommand : stateType -> ReplCommand stateType -> Result (Maybe (String, stateType))
+execReplCommand : stateType -> ReplCommand stateType -> IO (Result (Maybe (String, stateType)))
 execReplCommand state f = f state
 
 
 Command_nop : ReplCommand stateType
-Command_nop state = success $ Just ("", state)
+Command_nop state = pure $ success $ Just ("", state)
 
 Command_quit : ReplCommand stateType
-Command_quit state = success $ Nothing
+Command_quit state = pure $ success $ Nothing
 
 
 
@@ -56,7 +56,7 @@ parameters (supportedCommands : List (CommandBuilder stateType), ok : NonEmpty s
         helpStr = unlines $ map helpRow actualSupportedCommands
 
         Command_help : ReplCommand stateType
-        Command_help state = success $ Just (helpStr, state)
+        Command_help state = pure $ success $ Just (helpStr, state)
 
         actualSupportedCommands : List (CommandBuilder stateType)
         actualSupportedCommands = supportedCommands ++ [
@@ -93,16 +93,18 @@ parameters (supportedCommands : List (CommandBuilder stateType), ok : NonEmpty s
             (x :: xs) => buildDefaultCommand cmdStr
 
 
-    replLoop : stateType -> String -> Result (Maybe (String, stateType))
-    replLoop state inputStr = do
-        command <- parseReplCommand inputStr
-        execReplCommand state command
+    replLoop : stateType -> String -> IO (Result (Maybe (String, stateType)))
+    replLoop state inputStr = case parseReplCommand inputStr of
+        (Left err) => pure (Left err)
+        (Right command) => execReplCommand state command
 
-    replLoopWrapped : stateType -> String -> Maybe (String, stateType)
-    replLoopWrapped state x = case replLoop state x of
-        (Left l) => Just ("Error: " ++ l ++ "\r\n", state)
-        (Right Nothing) => Nothing
-        (Right (Just (a, b))) => Just (a ++ "\r\n", b)
+    replLoopWrapped : stateType -> String -> IO (Maybe (String, stateType))
+    replLoopWrapped state x = do
+        res <- replLoop state x
+        case res of
+            (Left l) => pure $ Just ("Error: " ++ l ++ "\r\n", state)
+            (Right Nothing) => pure Nothing
+            (Right (Just (a, b))) => pure $ Just (a ++ "\r\n", b)
 
     export
     replMain : stateType -> IO ()

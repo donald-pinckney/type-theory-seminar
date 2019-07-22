@@ -3,3 +3,8 @@ repl
 .history
 defs_main
 main
+*.aux
+*.log
+*.pdf
+*.tex
+ch2_main

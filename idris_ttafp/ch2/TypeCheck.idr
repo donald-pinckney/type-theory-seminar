@@ -46,7 +46,7 @@ lookupWrongFreeType {sigma} {gamma=MkContext (fds ** unique) bds} sigma_neq_tau 
         (VarFree ThisKey) =>(uniquenessContradiction {y=sigma} tail_key) unique
 
 
-
+export
 findType : (gamma : Context) -> (term : Term) -> Dec (sigma : Type' ** Holds $ MkTypeJudgment gamma term sigma)
 findType gamma (Var (Bound n)) =
     case contextLookupBoundDecl gamma n of
@@ -88,6 +88,7 @@ findType gamma (Lambda sigma body) =
         case holds of (AbstRule {sigma} {tau} bodyHolds) => contra (tau ** bodyHolds))
 
 
+export
 checkTypeJudgment : (j : TypeJudgment) -> Dec (Holds j)
 checkTypeJudgment (MkTypeJudgment gamma term sigma) =
     case findType gamma term of
