@@ -34,7 +34,7 @@ Latexify TypeJudgment True envs where
 
 latexifyRule : List (LatexSource False envs) -> LatexSource True envs -> LatexSource False envs
 latexifyRule hyps con =
-    let hyps_cat = concat (intersperse (str "\\n") hyps) in
+    let hyps_cat = concat (intersperse (str "\n") hyps) in
     addHeader "\\usepackage{bussproofs}" $ hyps_cat ++ case toIntegerNat (length hyps) of
         0 => str "\\AxiomC{" ++ inline con ++ str "}\n"
         1 => str "\\UnaryInfC{" ++ inline con ++ str "}\n"
