@@ -1,11 +1,12 @@
 module defs.Judgments
 
 import defs.AST
+import defs.Environments
 
 public export
 record TypeJudgment where
     constructor MkTypeJudgment
     -- env : ???
     -- context : ???
-    term : AExpr n m
-    type : AExpr n m
+    term : AExpr depth
+    type : AExpr depth

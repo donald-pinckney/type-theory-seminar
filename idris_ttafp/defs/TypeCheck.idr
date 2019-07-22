@@ -4,6 +4,7 @@ import defs.AST
 import defs.DerivationRules
 import defs.Judgments
 import defs.Identifier
+import defs.Environments
 import Shared.Result
 
 %default total
@@ -17,7 +18,7 @@ type_check j = No absurd
 
 
 export
-type_check_main : ABook n m -> Result ()
+type_check_main : ABook depth -> Result ()
 type_check_main ABookNil = success ()
 type_check_main (ABookConsSuppose x y) = error "Suppose checking is not implemented!"
 type_check_main (ABookConsDef (MkADef body type sourceId sourceArgs) rest_book) =

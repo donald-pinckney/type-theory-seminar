@@ -6,6 +6,7 @@ import defs.CST
 import defs.Resolve
 import defs.AST
 import defs.TypeCheck
+import defs.Environments
 
 export
 defs_main_path : String -> IO ()

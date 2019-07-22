@@ -11,12 +11,12 @@ import Data.Vect
 
 
 public export
-ResolveResult : Nat -> Nat -> Type
-ResolveResult envLen contextLen = Result (ABook envLen contextLen)
+ResolveResult : BindingDepth -> Type
+ResolveResult depth = Result (ABook depth)
 
 public export
 ResolveResultRoot : Type
-ResolveResultRoot = ResolveResult Z Z
+ResolveResultRoot = ResolveResult (Z, Z)
 
 
 total
@@ -58,14 +58,14 @@ resolveDefinition envDefs contextVars x =
         Nothing => error $ "Use of undeclared definition: " ++ (show x)
 
 mutual
-    resolveExprList : Nat -> Env envLen -> Context contextLen -> List CExpr -> Result (List (AExpr envLen contextLen), Nat)
+    resolveExprList : Nat -> Env envLen -> Context contextLen -> List CExpr -> Result (List (AExpr (envLen, contextLen)), Nat)
     resolveExprList uniqueId envDefs contextVars [] = success ([], uniqueId)
     resolveExprList uniqueId envDefs contextVars (x :: xs) = do
         (x', uniqueId) <- resolveExpr uniqueId envDefs contextVars x
         (xs', uniqueId) <- resolveExprList uniqueId envDefs contextVars xs
         success (x' :: xs', uniqueId)
 
-    resolveExpr : Nat -> Env envLen -> Context contextLen -> CExpr -> Result (AExpr envLen contextLen, Nat)
+    resolveExpr : Nat -> Env envLen -> Context contextLen -> CExpr -> Result (AExpr (envLen, contextLen), Nat)
     resolveExpr uniqueId envDefs contextVars CExprStar = success (AExprStar, uniqueId)
     resolveExpr uniqueId envDefs contextVars CExprBox = success (AExprBox, uniqueId)
     resolveExpr uniqueId envDefs contextVars CExprPostulate = success (AExprPostulate, uniqueId)
@@ -104,12 +104,12 @@ mutual
 
 
 
-resolveDecl : Nat -> Env envLen -> Context contextLen -> CDecl -> Result (ADecl envLen contextLen, Nat)
+resolveDecl : Nat -> Env envLen -> Context contextLen -> CDecl -> Result (ADecl (envLen, contextLen), Nat)
 resolveDecl uniqueId envDefs contextVars (MkCDecl var type) = do
     (t, uniqueId) <- resolveExpr uniqueId envDefs contextVars type
     success (MkADecl t var, uniqueId)
 
-resolveDef : Nat -> Env envLen -> Context contextLen -> CDef -> Result (ADef envLen contextLen, Nat)
+resolveDef : Nat -> Env envLen -> Context contextLen -> CDef -> Result (ADef (envLen, contextLen), Nat)
 resolveDef uniqueId envDefs contextVars (MkCDef name args body type) =
     if toList contextVars /= reverse args then
         error $ "The context and def params should be the same!"
@@ -118,7 +118,7 @@ resolveDef uniqueId envDefs contextVars (MkCDef name args body type) =
         (aType, uniqueId) <- resolveExpr uniqueId envDefs contextVars type
         success (MkADef aBody aType name args, uniqueId)
 
-resolveMain : Nat -> Env envLen -> Context contextLen -> CBook -> Result (ABook envLen contextLen, Nat)
+resolveMain : Nat -> Env envLen -> Context contextLen -> CBook -> Result (ABook (envLen, contextLen), Nat)
 resolveMain uniqueId envDefs contextVars [] = success (ABookNil, uniqueId)
 resolveMain uniqueId envDefs contextVars ((CLineDef (MkCDef name args body type)) :: restLines) = do
     extendedEnv <- addToEnv envDefs contextVars name
