@@ -7,6 +7,8 @@ import defs.Identifier
 import Shared.ParseUtils
 import defs.Environments
 
+%default total
+
 public export
 data Context : Nat -> Type where
     Nil : Context Z
@@ -37,28 +39,35 @@ deBruijnS binderDepth (MkDeBruijnIdentifier deBruijn sourceId) =
         True => MkDeBruijnIdentifier (FS deBruijn) sourceId
         False => MkDeBruijnIdentifier (weaken deBruijn) sourceId
 
-public export
-exprDepthS : Fin (S cd) -> AExpr (ed, cd) -> AExpr (ed, S cd)
-exprDepthS binderDepth AExprPostulate = AExprPostulate
-exprDepthS binderDepth (AExprLambda (MkADecl type sourceId) y) =
-    let type' = exprDepthS binderDepth type in
-    let y' = exprDepthS (FS binderDepth) y in
-    AExprLambda (MkADecl type' sourceId) y'
-exprDepthS binderDepth (AExprVariable x) = AExprVariable (deBruijnS binderDepth x)
-exprDepthS binderDepth (AExprApp x y) = AExprApp (exprDepthS binderDepth x) (exprDepthS binderDepth y)
-exprDepthS binderDepth (AExprDefApp x xs) = AExprDefApp x (map (exprDepthS binderDepth) xs)
-exprDepthS binderDepth AExprStar = AExprStar
-exprDepthS binderDepth AExprBox = AExprBox
-exprDepthS binderDepth (AExprArrow (MkADecl type sourceId) y) =
-    let type' = exprDepthS binderDepth type in
-    let y' = exprDepthS (FS binderDepth) y in
-    AExprArrow (MkADecl type' sourceId) y'
+mutual
+    public export
+    exprDepthS : Fin (S cd) -> AExpr (ed, cd) -> AExpr (ed, S cd)
+    exprDepthS binderDepth AExprPostulate = AExprPostulate
+    exprDepthS binderDepth (AExprLambda (MkADecl type sourceId) y) =
+        let type' = exprDepthS binderDepth type in
+        let y' = exprDepthS (FS binderDepth) y in
+        AExprLambda (MkADecl type' sourceId) y'
+    exprDepthS binderDepth (AExprVariable x) = AExprVariable (deBruijnS binderDepth x)
+    exprDepthS binderDepth (AExprApp x y) = AExprApp (exprDepthS binderDepth x) (exprDepthS binderDepth y)
+    -- exprDepthS binderDepth (AExprDefApp x xs) = AExprDefApp x (map (exprDepthS binderDepth) xs)
+    exprDepthS binderDepth (AExprDefApp d xs) = AExprDefApp d (exprDepthS_defArgs binderDepth xs)
+    exprDepthS binderDepth AExprStar = AExprStar
+    exprDepthS binderDepth AExprBox = AExprBox
+    exprDepthS binderDepth (AExprArrow (MkADecl type sourceId) y) =
+        let type' = exprDepthS binderDepth type in
+        let y' = exprDepthS (FS binderDepth) y in
+        AExprArrow (MkADecl type' sourceId) y'
+
+    public export
+    exprDepthS_defArgs : Fin (S cd) -> List (AExpr (ed, cd)) -> List (AExpr (ed, S cd))
+    exprDepthS_defArgs binderDepth [] = []
+    exprDepthS_defArgs binderDepth (x :: xs) = (exprDepthS binderDepth x) :: (exprDepthS_defArgs binderDepth xs)
 
 
 
 
 public export
-data Holds : TypeJudgment -> Type where -- No derivation rules yet here! In other words, Holds J = Void
+data Holds : TypeJudgment -> Type where
     SortHolds : Holds $ [] |- (AExprStar, AExprBox)
     VarHolds : (gamma : Context cd) ->
                 (a : AExpr (ed, cd)) ->
