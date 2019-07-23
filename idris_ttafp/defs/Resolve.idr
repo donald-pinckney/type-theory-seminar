@@ -4,7 +4,7 @@ import defs.AST
 import defs.CST
 import defs.Parse
 import defs.Identifier
-import defs.Environments
+import defs.BindingDepth
 import Shared.Result
 import Shared.ParseUtils
 import Data.Vect

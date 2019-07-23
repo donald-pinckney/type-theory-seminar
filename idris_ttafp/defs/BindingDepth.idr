@@ -1,4 +1,4 @@
-module defs.Environments
+module defs.BindingDepth
 
 import Data.Vect
 import defs.Identifier

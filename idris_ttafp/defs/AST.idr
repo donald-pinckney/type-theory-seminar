@@ -1,7 +1,7 @@
 module defs.AST
 
 import defs.Identifier
-import defs.Environments
+import defs.BindingDepth
 import Data.Fin
 
 public export

@@ -2,10 +2,12 @@ module defs.TypeCheck
 
 import defs.AST
 import defs.DerivationRules
-import defs.Judgments
 import defs.Identifier
-import defs.Environments
+import defs.BindingDepth
 import Shared.Result
+import Shared.ParseUtils
+
+import Data.Fin
 
 %default total
 
@@ -15,7 +17,26 @@ Uninhabited (Holds j) where
 
 -- Consequently, we reject all programs
 type_check : (j : TypeJudgment) -> Dec (Holds j)
-type_check j = No absurd
+type_check (MkTypeJudgment {cd} context AExprStar AExprBox) =
+    case context of
+        [] => Yes SortHolds
+        (x :: y) => ?tc_rhs1_2
+type_check (MkTypeJudgment {cd} context (AExprVariable x) type) = 
+  case context of
+        [] => No ?rhs_we_fucked
+        t :: ts => (case x of
+            MkDeBruijnIdentifier deBruijn src => (case deBruijn of
+                FZ => if exprDepthS FZ t == type
+                        then assert_total (case (type_check (ts |- (t, AExprStar)), type_check (ts |- (t, AExprBox))) of
+                            (Yes prf, _)   => 
+                                             let vh = VarHolds {s = AExprStar} ts t ?eqewqwre in
+                                             Yes $ ?wewewer
+                            (_, Yes prf)   => ?asdfdsfdf_2
+                            (No c1, No c2) => ?asdfdfd_3
+                            ) 
+                        else ?adsfd
+                FS x => ?asdfadsfaf_3))
+type_check _ = No absurd
 
 
 export
