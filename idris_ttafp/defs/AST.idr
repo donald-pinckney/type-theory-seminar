@@ -61,7 +61,7 @@ ARootBook = ABook (Z, Z)
 
 ----------- Interface Implementations ------------
 
-%access export
+%access public export
 %default covering
 
 Eq (DeBruijnIdentifier len) where

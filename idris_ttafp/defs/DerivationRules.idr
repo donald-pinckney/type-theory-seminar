@@ -2,10 +2,12 @@ module defs.DerivationRules
 
 import defs.AST
 import defs.BindingDepth
-import Data.Fin
 import defs.Identifier
 import Shared.ParseUtils
 import defs.BindingDepth
+
+import Data.Fin
+import Data.So
 
 %default total
 
@@ -60,8 +62,8 @@ mutual
 
 
 public export
-dummy_Z_id : SourceString -> AExpr (ed, S cd)
-dummy_Z_id src = AExprVariable $ MkDeBruijnIdentifier FZ (MkIdentifier src)
+dummy_Z_id : Identifier -> AExpr (ed, S cd)
+dummy_Z_id id = AExprVariable $ MkDeBruijnIdentifier FZ id
 
 
 --hack2 : (e1 : AExpr (ed, cd)) -> (e2 : AExpr (ed, cd)) -> (e1 == e2 = True) ->
@@ -70,10 +72,9 @@ dummy_Z_id src = AExprVariable $ MkDeBruijnIdentifier FZ (MkIdentifier src)
 
 public export
 data Holds : TypeJudgment -> Type where
---    HackHolds : Holds $ gamma |- (e1, t1) -> (e1 == e2 = True) -> (t1 == t2 =
---                                 True) -> Holds $ gamma |- (e2, t2)
+    HackHolds : Holds $ gamma |- (e1, t1) -> So (e1 == e2) -> So (t1 == t2) -> Holds $ gamma |- (e2, t2)
     SortHolds : Holds $ [] |- (AExprStar, AExprBox)
-    VarHolds : {src : SourceString} -> (gamma : Context ed cd) ->
+    VarHolds : {src : Identifier} -> (gamma : Context ed cd) ->
                 (a : AExpr (ed, cd)) ->
                 Holds (gamma |- (a, s)) ->
                 Holds $ (a :: gamma) |- (dummy_Z_id src, exprDepthS FZ a)
