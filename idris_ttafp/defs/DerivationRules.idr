@@ -69,12 +69,34 @@ dummy_Z_id id = AExprVariable $ MkDeBruijnIdentifier FZ id
 --hack2 : (e1 : AExpr (ed, cd)) -> (e2 : AExpr (ed, cd)) -> (e1 == e2 = True) ->
 --        e1 = e2
 
+public export
+data IsSort : AExpr d -> Type where
+    SortStar : IsSort AExprStar
+    SortBox : IsSort AExprBox
+
+export
+isSort : (e : AExpr d) -> Dec (IsSort e)
+isSort AExprStar = Yes SortStar
+isSort AExprBox = Yes SortBox
+isSort AExprPostulate = ?isSort_rhs_1 -- Just a ton of boring contradictions to write
+isSort (AExprLambda x y) = ?isSort_rhs_2
+isSort (AExprVariable x) = ?isSort_rhs_3
+isSort (AExprApp x y) = ?isSort_rhs_6
+isSort (AExprDefApp x xs) = ?isSort_rhs_5
+isSort (AExprArrow x y) = ?isSort_rhs_8
 
 public export
 data Holds : TypeJudgment -> Type where
     HackHolds : Holds $ gamma |- (e1, t1) -> So (e1 == e2) -> So (t1 == t2) -> Holds $ gamma |- (e2, t2)
     SortHolds : Holds $ [] |- (AExprStar, AExprBox)
-    VarHolds : {src : Identifier} -> (gamma : Context ed cd) ->
+    VarHolds : {src : Identifier} -> {isSort : IsSort s} -> (gamma : Context ed cd) ->
                 (a : AExpr (ed, cd)) ->
-                Either (Holds $ gamma |- (a, AExprStar)) (Holds $ gamma |- (a, AExprBox)) ->
+                (Holds $ gamma |- (a, s)) ->
                 Holds $ (a :: gamma) |- (dummy_Z_id src, exprDepthS FZ a)
+    FormHolds : {src : Identifier} -> {isSort1 : IsSort s1} -> {isSort2 : IsSort s2} ->
+                (gamma : Context ed cd) ->
+                (a : AExpr (ed, cd)) ->
+                (b : AExpr (ed, S cd)) ->
+                (Holds $ gamma |- (a, s1)) ->
+                (Holds $ (a :: gamma) |- (b, exprDepthS FZ s2)) ->
+                Holds $ gamma |- (AExprArrow (MkADecl a src) b, s2)
