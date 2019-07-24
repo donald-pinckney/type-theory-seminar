@@ -100,3 +100,11 @@ data Holds : TypeJudgment -> Type where
                 (Holds $ gamma |- (a, s1)) ->
                 (Holds $ (a :: gamma) |- (b, exprDepthS FZ s2)) ->
                 Holds $ gamma |- (AExprArrow (MkADecl a src) b, s2)
+    WeakHolds : {isSort : IsSort s} ->
+                -- (gamma : Context ed cd) ->
+                -- (a : AExpr (ed, cd)) ->
+                -- (b : AExpr (ed, cd)) ->
+                -- (c : AExpr (ed, cd)) ->
+                (Holds $ gamma |- (a, b)) ->
+                (Holds $ gamma |- (c, s)) ->
+                Holds $ (c :: gamma) |- (exprDepthS FZ a, exprDepthS FZ b)
