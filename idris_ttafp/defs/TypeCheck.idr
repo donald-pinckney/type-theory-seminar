@@ -29,10 +29,10 @@ type_check (MkTypeJudgment {cd=S cd} {ed} (t :: ts) (AExprVariable (MkDeBruijnId
         FZ => case choose (exprDepthS FZ t == type) of
             Left t_eq_type => case assert_total (type_check (ts |- (t, AExprStar)), type_check (ts |- (t, AExprBox))) of
                 (Yes prf, _) =>
-                     let vh = VarHolds {src=src} {s = AExprStar} ts t prf in
+                     let vh = VarHolds {src=src} ts t (Left prf) in
                      Yes $ HackHolds vh Oh t_eq_type
                 (_, Yes prf) =>
-                    let vh = VarHolds {src=src} {s = AExprBox} ts t prf in
+                    let vh = VarHolds {src=src} ts t (Right prf) in
                     Yes $ HackHolds vh Oh t_eq_type
 
                 -- This is definitely a type check error, since the given 'type' is not a type or kind

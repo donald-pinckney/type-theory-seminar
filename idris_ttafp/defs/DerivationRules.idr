@@ -76,5 +76,5 @@ data Holds : TypeJudgment -> Type where
     SortHolds : Holds $ [] |- (AExprStar, AExprBox)
     VarHolds : {src : Identifier} -> (gamma : Context ed cd) ->
                 (a : AExpr (ed, cd)) ->
-                Holds (gamma |- (a, s)) ->
+                Either (Holds $ gamma |- (a, AExprStar)) (Holds $ gamma |- (a, AExprBox)) ->
                 Holds $ (a :: gamma) |- (dummy_Z_id src, exprDepthS FZ a)
