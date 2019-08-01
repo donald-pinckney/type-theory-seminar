@@ -30,11 +30,22 @@ public export
 
 
 public export
+deBruijnInc : DeBruijnIdentifier cd -> DeBruijnIdentifier (S cd)
+deBruijnInc (MkDeBruijnIdentifier deBruijn sourceId) = MkDeBruijnIdentifier (FS deBruijn) sourceId
+
+public export
 deBruijnS : Fin (S cd) -> DeBruijnIdentifier cd -> DeBruijnIdentifier (S cd)
-deBruijnS binderDepth (MkDeBruijnIdentifier deBruijn sourceId) =
-    case (weaken deBruijn) >= binderDepth of
-        True => MkDeBruijnIdentifier (FS deBruijn) sourceId
-        False => MkDeBruijnIdentifier (weaken deBruijn) sourceId
+-- deBruijnS : Fin (S cd) -> DeBruijnIdentifier cd
+
+deBruijnS FZ (MkDeBruijnIdentifier deBruijn sourceId) = MkDeBruijnIdentifier (FS deBruijn) sourceId
+deBruijnS (FS x) (MkDeBruijnIdentifier FZ sourceId) = MkDeBruijnIdentifier FZ sourceId
+deBruijnS (FS binderDepth') (MkDeBruijnIdentifier (FS deBruijn') sourceId) =
+    deBruijnInc $ deBruijnS binderDepth' (MkDeBruijnIdentifier deBruijn' sourceId)
+
+-- deBruijnS binderDepth (MkDeBruijnIdentifier deBruijn sourceId) =
+--     case (weaken deBruijn) >= binderDepth of
+--         True => MkDeBruijnIdentifier (FS deBruijn) sourceId
+--         False => MkDeBruijnIdentifier (weaken deBruijn) sourceId
 
 mutual
     public export
@@ -59,6 +70,22 @@ mutual
     exprDepthS_defArgs : Fin (S cd) -> List (AExpr (ed, cd)) -> List (AExpr (ed, S cd))
     exprDepthS_defArgs binderDepth [] = []
     exprDepthS_defArgs binderDepth (x :: xs) = (exprDepthS binderDepth x) :: (exprDepthS_defArgs binderDepth xs)
+
+
+export
+exprDepthPrev : (binderDepth : Fin (S cd)) -> (bigE : AExpr (ed, S cd)) -> (smallE : AExpr (ed, cd) ** (exprDepthS binderDepth smallE = bigE))
+exprDepthPrev binderDepth AExprPostulate = (AExprPostulate ** Refl)
+exprDepthPrev binderDepth AExprStar = (AExprStar ** Refl)
+exprDepthPrev binderDepth AExprBox = (AExprBox ** Refl)
+exprDepthPrev binderDepth (AExprApp x y) = case (exprDepthPrev binderDepth x, exprDepthPrev binderDepth y) of
+    ((px ** Refl), (py ** Refl)) => (AExprApp px py ** Refl)
+
+exprDepthPrev FZ (AExprVariable (MkDeBruijnIdentifier FZ sourceId)) = ?oiueprqew --(AExprVariable (MkDeBruijnIdentifier FZ sourceId) ** ?erqwer)
+exprDepthPrev (FS x) (AExprVariable (MkDeBruijnIdentifier FZ sourceId)) = ?exprDepthPrev_rhs_6
+exprDepthPrev binderDepth (AExprVariable (MkDeBruijnIdentifier (FS x) sourceId)) = ?exprDepthPrev_rhs_4
+exprDepthPrev binderDepth (AExprLambda x y) = ?exprDepthPrev_rhs_2
+exprDepthPrev binderDepth (AExprDefApp x xs) = ?exprDepthPrev_rhs_5
+exprDepthPrev binderDepth (AExprArrow x y) = ?exprDepthPrev_rhs_8
 
 
 public export
@@ -108,3 +135,7 @@ data Holds : TypeJudgment -> Type where
                 (Holds $ gamma |- (a, b)) ->
                 (Holds $ gamma |- (c, s)) ->
                 Holds $ (c :: gamma) |- (exprDepthS FZ a, exprDepthS FZ b)
+    AbstHolds : {isSort : IsSort s} ->
+                (Holds $ (a :: gamma) |- (m, b)) ->
+                (Holds $ gamma |- (AExprArrow (MkADecl a src) b, s)) ->
+                Holds $ gamma |- (AExprLambda (MkADecl a src) m, AExprArrow (MkADecl a src) b)
