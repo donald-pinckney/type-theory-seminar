@@ -36,7 +36,7 @@ mutual
 
     find_type : (context : Context ed cd) -> (e : AExpr (ed, cd)) -> Dec (t : AExpr (ed, cd) ** Holds $ context |- (e, t))
     find_type {cd = Z} {ed} [] AExprStar = Yes (AExprBox ** SortHolds)
-    find_type {cd = S cd} {ed} (t :: ts) AExprStar = case find_type ts AExprStar of
+    find_type {cd = S cd} {ed} (t :: ts) AExprStar = case assert_total (find_type ts AExprStar) of
         (Yes t_prf) => use_weaken_find t_prf
         (No contra) => ?opiuwerw_2 -- Definitely a type check error
 
@@ -50,12 +50,12 @@ mutual
                         (No c1, No c2) => No ?asdfdfd_3
 
             FS x => -- We need to use weakening here
-                case find_type cts (AExprVariable (MkDeBruijnIdentifier x src)) of
+                case assert_total (find_type cts (AExprVariable (MkDeBruijnIdentifier x src))) of
                     (Yes t_prf) => use_weaken_find t_prf
                     (No contra) => ?var_rule_use_weaken_2 -- This is definitely a type check error
 
     find_type {cd = cd} {ed = ed} context (AExprArrow (MkADecl a x_src) b) =
-        case (find_type context a, find_type (a :: context) b) of
+        case assert_total (find_type context a, find_type (a :: context) b) of
             (Yes (s1 ** s1_prf), Yes (s2 ** s2_prf)) => case (isSort s1, isSort s2) of
                 (Yes s1_sort, Yes SortStar) => Yes (AExprStar ** FormHolds {isSort1 = s1_sort} {isSort2 = SortStar} context a b s1_prf s2_prf)
                 (Yes s1_sort, Yes SortBox) => Yes (AExprBox ** FormHolds {isSort1 = s1_sort} {isSort2 = SortBox} context a b s1_prf s2_prf)
@@ -68,8 +68,8 @@ mutual
 
 
     find_type {cd} {ed} context (AExprLambda (MkADecl a src_a) m) =
-        case find_type (a :: context) m of
-            (Yes (b ** m_b_prf)) => case find_type context (AExprArrow (MkADecl a src_a) b) of
+        case assert_total (find_type (a :: context) m) of
+            (Yes (b ** m_b_prf)) => case assert_total (find_type context (AExprArrow (MkADecl a src_a) b)) of
                 (Yes (s ** s_prf)) => case isSort s of
                     (Yes s_sort) => Yes (AExprArrow (MkADecl a src_a) b ** AbstHolds {isSort=s_sort} m_b_prf s_prf)
                     (No s_not_sort) => ?find_type_lambda_pi_not_sort -- Type error?
