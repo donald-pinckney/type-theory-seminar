@@ -1,6 +1,7 @@
 package defs
 
 --pkgs = baseline
+pkgs = contrib
 
 modules = defs, Shared
 

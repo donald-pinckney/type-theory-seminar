@@ -131,6 +131,14 @@ mutual
             (_, No c1, No c2, _) => No ?poiuwerqwer -- Definitely a type error
 
 
+    type_check (MkTypeJudgment context (AExprLambda (MkADecl a x_src) m) t) =
+        case find_type context (AExprLambda (MkADecl a x_src) m) of
+            (Yes (t' ** t_prf')) => case choose (t' == t) of
+                (Left eq_types) => Yes $ HackHolds t_prf' (alphaRefl (AExprLambda (MkADecl a x_src) m)) eq_types
+                (Right different_types) => ?poiuwerwer_2 -- Definitely a type error
+
+            (No contra) => ?oiuwerwer_3 -- Definitely a type error
+
     type_check _ = No absurd
 
 --No absurd

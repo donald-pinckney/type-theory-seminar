@@ -3,8 +3,7 @@ module defs.AST
 import defs.Identifier
 import defs.BindingDepth
 import Data.Fin
-
-
+import Data.So
 
 public export
 record DeBruijnIdentifier (len : Nat) where
@@ -75,7 +74,12 @@ mutual
 
     Eq (AExpr depth) where
         AExprPostulate == AExprPostulate = True
-        (AExprLambda x y) == (AExprLambda z w) = (x == z) && (y == w)
+        (AExprLambda x y) == (AExprLambda z w) = case (x == z, y == w) of
+            (True, True) => True
+            (True, False) => False
+            (False, True) => False
+            (False, False) => False
+
         (AExprVariable x) == (AExprVariable y) = x == y
         (AExprApp x y) == (AExprApp z w) = (x == z) && (y == w)
         AExprStar == AExprStar = True
@@ -96,6 +100,43 @@ mutual
         ABookNil == ABookNil = True
         _ == _ = False
 
+
+%default covering
+
+-- namedChoice : (b : Bool) -> (b' : Bool ** b = b')
+
+-- alphaRefl' : (a : AExpr d) -> (a == a) = True
+-- alphaRefl' AExprPostulate = Refl
+-- alphaRefl' AExprBox = Refl
+-- alphaRefl' AExprStar = Refl
+--     -- let tmp = alphaRefl' type inalphaRefl' (AExprLambda (MkADecl type sourceId) y) with (_)
+--
+-- alphaRefl' (AExprLambda (MkADecl type sourceId) y) with (namedChoice (type == type))
+--     alphaRefl' (AExprLambda (MkADecl type sourceId) y) | (True ** Refl) = ?puwerwerweree_2
+--     alphaRefl' (AExprLambda (MkADecl type sourceId) y) | (False ** pf) = ?puwerwerweree_3
+
+
+    -- alphaRefl' (AExprLambda (MkADecl type sourceId) y) | False = let tmp = alphaRefl' type in ?puwerwerweree_1
+    -- alphaRefl' (AExprLambda (MkADecl type sourceId) y) | True = ?puwerwerweree_2
+
+
+
+    -- alphaRefl' (AExprLambda (MkADecl type sourceId) y) | (Right r) = ?oiuweqwer_rhs_3
+
+    -- let tmp = alphaRefl' type in
+    -- ?oiuywerwer
+
+-- with (alphaRefl' type)
+--     alphaRefl' (AExprLambda (MkADecl type sourceId) y) | Refl = ?weqwer
+
+    -- ?alphaRefl_rhs_1
+-- alphaRefl' (AExprVariable x) = ?alphaRefl_rhs_3
+-- alphaRefl' (AExprApp x y) = ?alphaRefl_rhs_4
+-- alphaRefl' (AExprDefApp x xs) = ?alphaRefl_rhs_5
+-- alphaRefl' (AExprArrow x y) = ?alphaRefl_rhs_8
+--
+
+alphaRefl : (a : AExpr d) -> So (a == a)
 
 
 joinStrBy : String -> List String -> String
