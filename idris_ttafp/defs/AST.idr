@@ -65,78 +65,43 @@ ARootBook = ABook (Z, Z)
 %access public export
 %default covering
 
-Eq (DeBruijnIdentifier len) where
-    (MkDeBruijnIdentifier deBruijn sourceId) == (MkDeBruijnIdentifier x y) = deBruijn == x
+-- Eq (DeBruijnIdentifier len) where
+--     (MkDeBruijnIdentifier deBruijn sourceId) == (MkDeBruijnIdentifier x y) = deBruijn == x
+--
+-- mutual
+--     Eq (ADecl depth) where
+--         (MkADecl type sourceId) == (MkADecl x y) = type == x
+--
+--     Eq (AExpr depth) where
+--         AExprPostulate == AExprPostulate = True
+--         (AExprLambda x y) == (AExprLambda z w) = case (x == z, y == w) of
+--             (True, True) => True
+--             (True, False) => False
+--             (False, True) => False
+--             (False, False) => False
+--
+--         (AExprVariable x) == (AExprVariable y) = x == y
+--         (AExprApp x y) == (AExprApp z w) = (x == z) && (y == w)
+--         AExprStar == AExprStar = True
+--         AExprBox == AExprBox = True
+--         (AExprArrow x y) == (AExprArrow z w) = (x == z) && (y == w)
+--         _ == _ = False
 
-mutual
-    Eq (ADecl depth) where
-        (MkADecl type sourceId) == (MkADecl x y) = type == x
-
-    Eq (AExpr depth) where
-        AExprPostulate == AExprPostulate = True
-        (AExprLambda x y) == (AExprLambda z w) = case (x == z, y == w) of
-            (True, True) => True
-            (True, False) => False
-            (False, True) => False
-            (False, False) => False
-
-        (AExprVariable x) == (AExprVariable y) = x == y
-        (AExprApp x y) == (AExprApp z w) = (x == z) && (y == w)
-        AExprStar == AExprStar = True
-        AExprBox == AExprBox = True
-        (AExprArrow x y) == (AExprArrow z w) = (x == z) && (y == w)
-        _ == _ = False
-
-Eq (ADef depth) where
-    a@(MkADef body type sourceId sourceArgs) == b@(MkADef x y z xs) = (body == x) && (type == y) && (numArgs a == numArgs b)
-
-mutual
-    Eq (ASuppose depth) where
-        (MkASuppose decl body) == (MkASuppose x y) = (decl == x) && (body == y)
-
-    Eq (ABook depth) where
-        (ABookConsDef x y) == (ABookConsDef z w) = (x == z) && (y == w)
-        (ABookConsSuppose x y) == (ABookConsSuppose z w) = (x == z) && (y == w)
-        ABookNil == ABookNil = True
-        _ == _ = False
+-- Eq (ADef depth) where
+--     a@(MkADef body type sourceId sourceArgs) == b@(MkADef x y z xs) = (body == x) && (type == y) && (numArgs a == numArgs b)
+--
+-- mutual
+--     Eq (ASuppose depth) where
+--         (MkASuppose decl body) == (MkASuppose x y) = (decl == x) && (body == y)
+--
+--     Eq (ABook depth) where
+--         (ABookConsDef x y) == (ABookConsDef z w) = (x == z) && (y == w)
+--         (ABookConsSuppose x y) == (ABookConsSuppose z w) = (x == z) && (y == w)
+--         ABookNil == ABookNil = True
+--         _ == _ = False
 
 
 %default covering
-
--- namedChoice : (b : Bool) -> (b' : Bool ** b = b')
-
--- alphaRefl' : (a : AExpr d) -> (a == a) = True
--- alphaRefl' AExprPostulate = Refl
--- alphaRefl' AExprBox = Refl
--- alphaRefl' AExprStar = Refl
---     -- let tmp = alphaRefl' type inalphaRefl' (AExprLambda (MkADecl type sourceId) y) with (_)
---
--- alphaRefl' (AExprLambda (MkADecl type sourceId) y) with (namedChoice (type == type))
---     alphaRefl' (AExprLambda (MkADecl type sourceId) y) | (True ** Refl) = ?puwerwerweree_2
---     alphaRefl' (AExprLambda (MkADecl type sourceId) y) | (False ** pf) = ?puwerwerweree_3
-
-
-    -- alphaRefl' (AExprLambda (MkADecl type sourceId) y) | False = let tmp = alphaRefl' type in ?puwerwerweree_1
-    -- alphaRefl' (AExprLambda (MkADecl type sourceId) y) | True = ?puwerwerweree_2
-
-
-
-    -- alphaRefl' (AExprLambda (MkADecl type sourceId) y) | (Right r) = ?oiuweqwer_rhs_3
-
-    -- let tmp = alphaRefl' type in
-    -- ?oiuywerwer
-
--- with (alphaRefl' type)
---     alphaRefl' (AExprLambda (MkADecl type sourceId) y) | Refl = ?weqwer
-
-    -- ?alphaRefl_rhs_1
--- alphaRefl' (AExprVariable x) = ?alphaRefl_rhs_3
--- alphaRefl' (AExprApp x y) = ?alphaRefl_rhs_4
--- alphaRefl' (AExprDefApp x xs) = ?alphaRefl_rhs_5
--- alphaRefl' (AExprArrow x y) = ?alphaRefl_rhs_8
---
-
-alphaRefl : (a : AExpr d) -> So (a == a)
 
 
 joinStrBy : String -> List String -> String
@@ -176,6 +141,8 @@ mutual
         show (MkASuppose decl body) = makeTabs (ctxDepth depth) ++ "Suppose " ++ show decl ++ "\n" ++ show body
 
     Show (ABook depth) where
-        show (ABookConsSuppose x y) = show x ++ (if y == ABookNil then "" else "\n\n") ++ show y
-        show (ABookConsDef x y) = show x ++ (if y == ABookNil then "" else "\n") ++ show y
+        show (ABookConsSuppose x (ABookNil {depth=d})) = show x ++ show (ABookNil {depth=d})
+        show (ABookConsSuppose x y) = show x ++ "\n\n" ++ show y
+        show (ABookConsDef {depth=d} x y@(ABookNil {depth=envS d})) = show x ++ show y
+        show (ABookConsDef x y) = show x ++ "\n" ++ show y
         show ABookNil = ""

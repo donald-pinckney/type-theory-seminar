@@ -9,10 +9,12 @@ import defs.AST
 
 %default total
 
+public export
 data AllEquiv : (p : t -> t -> Type) -> List t -> List t -> Type where
     ConsEquiv : p h1 h2 -> AllEquiv p rest1 rest2 -> AllEquiv p (h1 :: rest1) (h2 :: rest2)
     NilEquiv : AllEquiv p [] []
 
+export
 implementation Preorder t p => Preorder (List t) (AllEquiv p) where
     reflexive [] = NilEquiv
     reflexive (x :: xs) = ConsEquiv (reflexive x) (reflexive xs)
@@ -20,11 +22,13 @@ implementation Preorder t p => Preorder (List t) (AllEquiv p) where
     transitive (h1 :: rest1) (h2 :: rest2) (h3 :: rest3) (ConsEquiv h1h2 rest1rest2) (ConsEquiv h2h3 rest2rest3) = ConsEquiv (transitive h1 h2 h3 h1h2 h2h3) (transitive rest1 rest2 rest3 rest1rest2 rest2rest3)
     transitive [] [] [] NilEquiv NilEquiv = NilEquiv
 
+export
 implementation Equivalence t p => Equivalence (List t) (AllEquiv p) where
     symmetric (h1 :: rest1) (h2 :: rest2) (ConsEquiv h1h2 rest1rest2) = ConsEquiv (symmetric h1 h2 h1h2) (symmetric rest1 rest2 rest1rest2)
     symmetric [] [] NilEquiv = NilEquiv
 
 
+export
 isAllEquiv : (xs : List t) -> (ys : List t) -> ((x : t) -> (y : t) -> Dec (p x y)) -> Dec (AllEquiv p xs ys)
 isAllEquiv [] [] isEquiv = Yes NilEquiv
 isAllEquiv (x :: xs) (y :: ys) isEquiv = case (isEquiv x y, isAllEquiv xs ys isEquiv) of
@@ -47,6 +51,7 @@ isAllEquiv [] (y :: ys) isEquiv = No (\sup => case sup of
     NilEquiv impossible
 )
 
+public export
 data AlphaEquivalent : AExpr d -> AExpr d -> Type where
     AlphaEquivalentPostulate : AlphaEquivalent AExprPostulate AExprPostulate
     AlphaEquivalentStar : AlphaEquivalent AExprStar AExprStar
@@ -57,15 +62,17 @@ data AlphaEquivalent : AExpr d -> AExpr d -> Type where
     AlphaEquivalentDefApp : AllEquiv AlphaEquivalent args1 args2 -> AlphaEquivalent (AExprDefApp (MkDeBruijnIdentifier x src1) args1) (AExprDefApp (MkDeBruijnIdentifier x src2) args2)
     AlphaEquivalentApp : AlphaEquivalent l1 l2 -> AlphaEquivalent r1 r2 -> AlphaEquivalent (AExprApp l1 r1) (AExprApp l2 r2)
 
+public export
 implementation Preorder (AExpr d) AlphaEquivalent where
     reflexive AExprPostulate = AlphaEquivalentPostulate
-    reflexive (AExprLambda (MkADecl t src) m) = AlphaEquivalentLambda (reflexive t) (reflexive m)
-    reflexive (AExprVariable (MkDeBruijnIdentifier x src)) = AlphaEquivalentVariable
-    reflexive (AExprApp x y) = AlphaEquivalentApp (reflexive x) (reflexive y)
-    reflexive (AExprDefApp (MkDeBruijnIdentifier x src) args) = AlphaEquivalentDefApp (reflexive args)
     reflexive AExprStar = AlphaEquivalentStar
     reflexive AExprBox = AlphaEquivalentBox
+    reflexive (AExprApp x y) = AlphaEquivalentApp (reflexive x) (reflexive y)
+    reflexive (AExprLambda (MkADecl t src) m) = AlphaEquivalentLambda (reflexive t) (reflexive m)
+    reflexive (AExprVariable (MkDeBruijnIdentifier x src)) = AlphaEquivalentVariable
     reflexive (AExprArrow (MkADecl t src) m) = AlphaEquivalentArrow (reflexive t) (reflexive m)
+    reflexive (AExprDefApp (MkDeBruijnIdentifier x src) args) = AlphaEquivalentDefApp (assert_total (reflexive args))
+
 
     transitive AExprPostulate AExprPostulate AExprPostulate AlphaEquivalentPostulate AlphaEquivalentPostulate = AlphaEquivalentPostulate
     transitive AExprStar AExprStar AExprStar AlphaEquivalentStar AlphaEquivalentStar = AlphaEquivalentStar
@@ -74,8 +81,9 @@ implementation Preorder (AExpr d) AlphaEquivalent where
     transitive (AExprApp l1 r1) (AExprApp l2 r2) (AExprApp l3 r3) (AlphaEquivalentApp l1l2 r1r2) (AlphaEquivalentApp l2l3 r2r3) = AlphaEquivalentApp (transitive l1 l2 l3 l1l2 l2l3) (transitive r1 r2 r3 r1r2 r2r3)
     transitive (AExprLambda (MkADecl t1 src1) m1) (AExprLambda (MkADecl t2 src2) m2) (AExprLambda (MkADecl t3 src3) m3) (AlphaEquivalentLambda t1t2 m1m2) (AlphaEquivalentLambda t2t3 m2m3) = AlphaEquivalentLambda (transitive t1 t2 t3 t1t2 t2t3) (transitive m1 m2 m3 m1m2 m2m3)
     transitive (AExprArrow (MkADecl t1 src1) m1) (AExprArrow (MkADecl t2 src2) m2) (AExprArrow (MkADecl t3 src3) m3) (AlphaEquivalentArrow t1t2 m1m2) (AlphaEquivalentArrow t2t3 m2m3) = AlphaEquivalentArrow (transitive t1 t2 t3 t1t2 t2t3) (transitive m1 m2 m3 m1m2 m2m3)
-    transitive (AExprDefApp (MkDeBruijnIdentifier x src1) args1) (AExprDefApp (MkDeBruijnIdentifier x src2) args2) (AExprDefApp (MkDeBruijnIdentifier x src3) args3) (AlphaEquivalentDefApp args1args2) (AlphaEquivalentDefApp args2args3) = AlphaEquivalentDefApp (transitive args1 args2 args3 args1args2 args2args3)
+    transitive (AExprDefApp (MkDeBruijnIdentifier x src1) args1) (AExprDefApp (MkDeBruijnIdentifier x src2) args2) (AExprDefApp (MkDeBruijnIdentifier x src3) args3) (AlphaEquivalentDefApp args1args2) (AlphaEquivalentDefApp args2args3) = AlphaEquivalentDefApp (assert_total (transitive args1 args2 args3 args1args2 args2args3))
 
+public export
 implementation Equivalence (AExpr d) AlphaEquivalent where
     symmetric AExprPostulate AExprPostulate AlphaEquivalentPostulate = AlphaEquivalentPostulate
     symmetric AExprStar AExprStar AlphaEquivalentStar = AlphaEquivalentStar
@@ -83,10 +91,10 @@ implementation Equivalence (AExpr d) AlphaEquivalent where
     symmetric (AExprVariable (MkDeBruijnIdentifier x src1)) (AExprVariable (MkDeBruijnIdentifier x src2)) AlphaEquivalentVariable = AlphaEquivalentVariable
     symmetric (AExprLambda (MkADecl t1 src1) m1) (AExprLambda (MkADecl t2 src2) m2) (AlphaEquivalentLambda t1t2 m1m2) = AlphaEquivalentLambda (symmetric t1 t2 t1t2) (symmetric m1 m2 m1m2)
     symmetric (AExprArrow (MkADecl t1 src1) m1) (AExprArrow (MkADecl t2 src2) m2) (AlphaEquivalentArrow t1t2 m1m2) = AlphaEquivalentArrow (symmetric t1 t2 t1t2) (symmetric m1 m2 m1m2)
-    symmetric (AExprDefApp (MkDeBruijnIdentifier x src1) args1) (AExprDefApp (MkDeBruijnIdentifier x src2) args2) (AlphaEquivalentDefApp args1args2) = AlphaEquivalentDefApp (symmetric args1 args2 args1args2)
+    symmetric (AExprDefApp (MkDeBruijnIdentifier x src1) args1) (AExprDefApp (MkDeBruijnIdentifier x src2) args2) (AlphaEquivalentDefApp args1args2) = AlphaEquivalentDefApp (assert_total (symmetric args1 args2 args1args2))
     symmetric (AExprApp l1 r1) (AExprApp l2 r2) (AlphaEquivalentApp l1l2 r1r2) = AlphaEquivalentApp (symmetric l1 l2 l1l2) (symmetric r1 r2 r1r2)
 
-
+export
 isAlphaEquivalent : (e1 : AExpr d) -> (e2 : AExpr d) -> Dec (AlphaEquivalent e1 e2)
 isAlphaEquivalent AExprPostulate AExprPostulate = Yes AlphaEquivalentPostulate
 isAlphaEquivalent AExprPostulate (AExprLambda x y) = No (\pi_arg => case pi_arg of
@@ -385,7 +393,7 @@ isAlphaEquivalent (AExprVariable (MkDeBruijnIdentifier x1 src1)) (AExprArrow x y
     )
 
 
-isAlphaEquivalent (AExprDefApp (MkDeBruijnIdentifier x1 src1) args1) (AExprDefApp (MkDeBruijnIdentifier x2 src2) args2) with (decEq x1 x2, isAllEquiv args1 args2 isAlphaEquivalent)
+isAlphaEquivalent (AExprDefApp (MkDeBruijnIdentifier x1 src1) args1) (AExprDefApp (MkDeBruijnIdentifier x2 src2) args2) with (decEq x1 x2, assert_total (isAllEquiv args1 args2 isAlphaEquivalent))
     isAlphaEquivalent (AExprDefApp (MkDeBruijnIdentifier x1 src1) args1) (AExprDefApp (MkDeBruijnIdentifier x2 src2) args2) | (Yes x1x2, Yes args1args2) = rewrite x1x2 in Yes (AlphaEquivalentDefApp args1args2)
     isAlphaEquivalent (AExprDefApp (MkDeBruijnIdentifier x1 src1) args1) (AExprDefApp (MkDeBruijnIdentifier x2 src2) args2) | (No x1x2_c, Yes args1args2) = No (\sup => case sup of
         (AlphaEquivalentDefApp args1args2') => x1x2_c Refl

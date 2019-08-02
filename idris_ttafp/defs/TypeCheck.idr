@@ -4,8 +4,10 @@ import defs.AST
 import defs.DerivationRules
 import defs.Identifier
 import defs.BindingDepth
+import defs.AlphaEquivalence
 import Shared.Result
 import Shared.ParseUtils
+import Decidable.Order
 
 import Data.So
 import Data.Fin
@@ -16,10 +18,6 @@ import Data.Fin
 -- There are no derivation rules, so any judgment holding is a contradiction
 Uninhabited (Holds j) where
 
-
-fin_eq : (x : Fin b) -> So (x == x)
-fin_eq FZ = Oh
-fin_eq (FS x) = fin_eq x
 
 mutual
     use_weaken : (Holds $ context |- (a, b)) -> Dec $ Holds $ (c :: context) |- (exprDepthS FZ a, exprDepthS FZ b)
@@ -93,26 +91,26 @@ mutual
     type_check (MkTypeJudgment {cd=Z} {ed} [] (AExprVariable (MkDeBruijnIdentifier deBruijn src)) type) = absurd deBruijn
     type_check (MkTypeJudgment {cd=S cd} {ed} (t :: ts) (AExprVariable (MkDeBruijnIdentifier deBruijn src)) type) =
         case deBruijn of
-            FZ => case choose (exprDepthS FZ t == type) of
-                Left t_eq_type => case assert_total (type_check (ts |- (t, AExprStar)), type_check (ts |- (t, AExprBox))) of
+            FZ => case isAlphaEquivalent (exprDepthS FZ t) type of
+                Yes t_eq_type => case assert_total (type_check (ts |- (t, AExprStar)), type_check (ts |- (t, AExprBox))) of
                     (Yes prf, _) =>
                          let vh = VarHolds {src=src} {isSort=SortStar} ts t prf in
-                         Yes $ HackHolds vh Oh t_eq_type
+                         Yes $ HackHolds vh (reflexive {t=AExpr (ed, S cd)} _) t_eq_type
                     (_, Yes prf) =>
                         let vh = VarHolds {src=src} {isSort=SortBox} ts t prf in
-                        Yes $ HackHolds vh Oh t_eq_type
+                        Yes $ HackHolds vh (reflexive {t=AExpr (ed, S cd)} _) t_eq_type
 
                     -- This is definitely a type check error, since the given 'type' is not a type or kind
                     (No c1, No c2) => No ?asdfdfd_3
 
-                Right t_neq_type => No ?oiwerwer_2 -- This is definitely a type check error since the types don't match
+                No t_neq_type => No ?oiwerwer_2 -- This is definitely a type check error since the types don't match
 
             FS x => -- We need to use weakening here
                 case find_type ts (AExprVariable (MkDeBruijnIdentifier x src)) of
                 (Yes (type' ** prf)) => case use_weaken {c=t} prf of
-                     (Yes prf_weak) => case choose (exprDepthS FZ type' == type) of
-                         (Left eq_types) => Yes $ HackHolds prf_weak (fin_eq x) eq_types
-                         (Right r) => ?opuiwewer_2
+                     (Yes prf_weak) => case isAlphaEquivalent (exprDepthS FZ type') type of
+                         (Yes eq_types) => Yes $ HackHolds prf_weak (reflexive {t=AExpr (ed, S cd)} _) eq_types
+                         (No r) => ?opuiwewer_2
                      (No contra) => ?var_rule_use_weaken_4 -- this is definitely a type error
                 (No contra) => ?var_rule_use_weaken_2 -- This is definitely a type check error
 
@@ -131,11 +129,11 @@ mutual
             (_, No c1, No c2, _) => No ?poiuwerqwer -- Definitely a type error
 
 
-    type_check (MkTypeJudgment context (AExprLambda (MkADecl a x_src) m) t) =
+    type_check (MkTypeJudgment {cd} {ed} context (AExprLambda (MkADecl a x_src) m) t) =
         case find_type context (AExprLambda (MkADecl a x_src) m) of
-            (Yes (t' ** t_prf')) => case choose (t' == t) of
-                (Left eq_types) => Yes $ HackHolds t_prf' (alphaRefl (AExprLambda (MkADecl a x_src) m)) eq_types
-                (Right different_types) => ?poiuwerwer_2 -- Definitely a type error
+            (Yes (t' ** t_prf')) => case isAlphaEquivalent t' t of
+                (Yes eq_types) => Yes $ HackHolds t_prf' (reflexive {t=AExpr (ed, cd)} _) eq_types
+                (No different_types) => ?poiuwerwer_2 -- Definitely a type error
 
             (No contra) => ?oiuwerwer_3 -- Definitely a type error
 

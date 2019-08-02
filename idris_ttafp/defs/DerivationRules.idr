@@ -5,6 +5,7 @@ import defs.BindingDepth
 import defs.Identifier
 import Shared.ParseUtils
 import defs.BindingDepth
+import defs.AlphaEquivalence
 
 import Data.Fin
 import Data.So
@@ -114,7 +115,7 @@ isSort (AExprArrow x y) = ?isSort_rhs_8
 
 public export
 data Holds : TypeJudgment -> Type where
-    HackHolds : Holds $ gamma |- (e1, t1) -> So (e1 == e2) -> So (t1 == t2) -> Holds $ gamma |- (e2, t2)
+    HackHolds : Holds $ gamma |- (e1, t1) -> AlphaEquivalent e1 e2 -> AlphaEquivalent t1 t2 -> Holds $ gamma |- (e2, t2)
     SortHolds : Holds $ [] |- (AExprStar, AExprBox)
     VarHolds : {src : Identifier} -> {isSort : IsSort s} -> (gamma : Context ed cd) ->
                 (a : AExpr (ed, cd)) ->
