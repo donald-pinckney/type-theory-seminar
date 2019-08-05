@@ -9,6 +9,7 @@ import Shared.Result
 import Shared.ParseUtils
 import Decidable.Order
 import defs.ResultDec
+import defs.BetaEquivalence
 
 import Data.So
 import Data.Fin
@@ -20,6 +21,14 @@ import Debug.Error
 
 
 mutual
+    use_conv : Holds $ context |- (a, b) -> BetaEquivalent b b' -> ResultDec $ Holds $ context |- (a, b')
+    use_conv {context} {b} {b'} ab bb' = case find_type context b' of
+        (Ok (AExprStar ** prf)) => Ok $ ConvHolds {isSort=SortStar} ab prf bb'
+        (Ok (AExprBox ** prf)) => Ok $ ConvHolds {isSort=SortBox} ab prf bb'
+        (Ok (bt' ** prf)) => Error ((show bt') ++ " is not a sort") ?opuipknqwperwe
+        (Error msg not_sort') => Error msg ?opiuwerme
+
+
     use_weaken : (Holds $ context |- (a, b)) -> ResultDec $ Holds $ (c :: context) |- (exprDepthS FZ a, exprDepthS FZ b)
     use_weaken {context} {c} a_b = case assert_total (type_check $ context |- (c, AExprStar), type_check $ context |- (c, AExprBox)) of
         (Ok c_star, _box_tc) => Ok $ WeakHolds {isSort=SortStar} a_b c_star
@@ -102,11 +111,11 @@ mutual
             FZ => case isAlphaEquivalent (exprDepthS FZ t) type of
                 Ok t_eq_type => case assert_total (type_check (ts |- (t, AExprStar)), type_check (ts |- (t, AExprBox))) of
                     (Ok prf, _) =>
-                         let vh = VarHolds {src=src} {isSort=SortStar} ts t prf in
-                         Ok $ HackHolds vh (reflexive {t=AExpr (ed, S cd)} _) t_eq_type
+                        let vh = VarHolds {src=src} {isSort=SortStar} ts t prf in
+                        use_conv vh (AlphaRefl t_eq_type)
                     (_, Ok prf) =>
                         let vh = VarHolds {src=src} {isSort=SortBox} ts t prf in
-                        Ok $ HackHolds vh (reflexive {t=AExpr (ed, S cd)} _) t_eq_type
+                        use_conv vh (AlphaRefl t_eq_type)
 
                     -- This is definitely a type check error, since the given 'type' is not a type or kind
                     (Error msg1 c1, Error msg2 c2) => Error ?jouy2qwer ?asdfdfd_3
@@ -117,7 +126,8 @@ mutual
                 case find_type ts (AExprVariable (MkDeBruijnIdentifier x src)) of
                 (Ok (type' ** prf)) => case use_weaken {c=t} prf of
                      (Ok prf_weak) => case isAlphaEquivalent (exprDepthS FZ type') type of
-                         (Ok eq_types) => Ok $ HackHolds prf_weak (reflexive {t=AExpr (ed, S cd)} _) eq_types
+                         (Ok eq_types) =>
+                            use_conv prf_weak (AlphaRefl eq_types)
                          (Error msg r) => ?opuiwewer_2
                      (Error msg contra) => ?var_rule_use_weaken_4 -- this is definitely a type error
                 (Error msg contra) => ?var_rule_use_weaken_2 -- This is definitely a type check error
@@ -140,14 +150,16 @@ mutual
     type_check (MkTypeJudgment {cd} {ed} context (AExprLambda (MkADecl a x_src) m) t) =
         case find_type context (AExprLambda (MkADecl a x_src) m) of
             (Ok (t' ** t_prf')) => case isAlphaEquivalent t' t of
-                (Ok eq_types) => Ok $ HackHolds t_prf' (reflexive {t=AExpr (ed, cd)} _) eq_types
+                (Ok eq_types) =>
+                    use_conv t_prf' (AlphaRefl eq_types)
                 (Error msg different_types) => ?poiuwerwer_2 -- Definitely a type error
 
             (Error msg contra) => ?oiuwerwer_3 -- Definitely a type error
 
     type_check (MkTypeJudgment {cd} {ed} context a t) = case find_type context a of
         (Ok (t' ** prf')) => case isAlphaEquivalent t' t of
-            (Ok eq_types) => Ok $ HackHolds prf' (reflexive {t=AExpr (ed, cd)} _) eq_types
+            (Ok eq_types) =>
+                use_conv prf' (AlphaRefl eq_types)
             (Error msg different_types) => Error msg ?different_types_contra -- Definitely a type error
         (Error msg contra) => Error msg ?no_type_prf
 

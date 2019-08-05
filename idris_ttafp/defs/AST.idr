@@ -101,8 +101,7 @@ ARootBook = ABook (Z, Z)
 --         _ == _ = False
 
 
-%default covering
-
+%default total
 
 joinStrBy : String -> List String -> String
 joinStrBy j [] = ""
@@ -124,7 +123,7 @@ mutual
         show (AExprLambda x y) = "\\" ++ show x ++ " . " ++ show y
         show (AExprVariable x) = show x
         show (AExprApp x y) = "(" ++ show x ++ ") (" ++ show y ++ ")"
-        show (AExprDefApp d args) = show d ++ " {" ++ showList args ++ "}"
+        show (AExprDefApp d args) = show d ++ " {" ++ assert_total (showList args) ++ "}"
         show AExprStar = "*"
         show AExprBox = "[]"
         show (AExprArrow x y) = "(" ++ show x ++ ") -> " ++ show y

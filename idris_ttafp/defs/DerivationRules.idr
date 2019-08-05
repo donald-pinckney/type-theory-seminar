@@ -7,6 +7,7 @@ import Shared.ParseUtils
 import defs.BindingDepth
 import defs.AlphaEquivalence
 import defs.ResultDec
+import defs.BetaEquivalence
 
 import Data.Fin
 import Data.So
@@ -196,7 +197,13 @@ mutual
 
 public export
 data Holds : TypeJudgment -> Type where
-    HackHolds : Holds $ gamma |- (e1, t1) -> AlphaEquivalent e1 e2 -> AlphaEquivalent t1 t2 -> Holds $ gamma |- (e2, t2)
+    -- HackHolds : Holds $ gamma |- (e1, t1) -> AlphaEquivalent e1 e2 -> AlphaEquivalent t1 t2 -> Holds $ gamma |- (e2, t2)
+    ConvHolds : {isSort : IsSort s} ->
+                Holds $ gamma |- (a, b) ->
+                Holds $ gamma |- (b', s) ->
+                BetaEquivalent b b' ->
+                Holds $ gamma |- (a, b')
+
     SortHolds : Holds $ [] |- (AExprStar, AExprBox)
     VarHolds : {src : Identifier} -> {isSort : IsSort s} -> (gamma : Context ed cd) ->
                 (a : AExpr (ed, cd)) ->
