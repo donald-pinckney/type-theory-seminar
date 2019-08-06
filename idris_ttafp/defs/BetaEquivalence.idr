@@ -98,6 +98,15 @@ data BetaEquivalent : AExpr d -> AExpr d -> Type where
     AlphaRefl : AlphaEquivalent a b -> BetaEquivalent a b
     Normalized : AlphaEquivalent (eval a) (eval b) -> BetaEquivalent a b
 
+-- alphaImpliesBeta : (a : AExpr (ed, cd)) -> (b : AExpr (ed, cd)) -> AlphaEquivalent a b -> BetaEquivalent a b
+-- alphaImpliesBeta AExprPostulate AExprPostulate AlphaEquivalentPostulate = ?alphaImpliesBeta_rhs_1
+-- alphaImpliesBeta AExprStar AExprStar AlphaEquivalentStar = ?alphaImpliesBeta_rhs_2
+-- alphaImpliesBeta AExprBox AExprBox AlphaEquivalentBox = Normalized AlphaEquivalentBox
+-- alphaImpliesBeta (AExprVariable (MkDeBruijnIdentifier x src1)) (AExprVariable (MkDeBruijnIdentifier x src2)) AlphaEquivalentVariable = ?alphaImpliesBeta_rhs_4
+-- alphaImpliesBeta (AExprLambda (MkADecl t1 src1) m1) (AExprLambda (MkADecl t2 src2) m2) (AlphaEquivalentLambda x y) = ?alphaImpliesBeta_rhs_5
+-- alphaImpliesBeta (AExprArrow (MkADecl t1 src1) m1) (AExprArrow (MkADecl t2 src2) m2) (AlphaEquivalentArrow x y) = ?alphaImpliesBeta_rhs_6
+-- alphaImpliesBeta (AExprDefApp (MkDeBruijnIdentifier x src1) args1) (AExprDefApp (MkDeBruijnIdentifier x src2) args2) (AlphaEquivalentDefApp y) = ?alphaImpliesBeta_rhs_7
+-- alphaImpliesBeta (AExprApp l1 r1) (AExprApp l2 r2) (AlphaEquivalentApp l1l2 r1r2) = Normalized ?pouwerwer
 
 export
 isBetaEquivalent : (a : AExpr (ed, cd)) -> (b : AExpr (ed, cd)) -> ResultDec (BetaEquivalent a b)

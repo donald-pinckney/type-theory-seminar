@@ -22,24 +22,29 @@ import Debug.Trace
 
 
 mutual
+    check_sort : (n : Nat) -> (context : Context ed cd) -> (e : AExpr (ed, cd)) -> ResultDec (t : AExpr (ed, cd) ** (Holds $ context |- (e, t), IsSort t))
+    check_sort n context e = case find_type_log (S n) context e of
+        (Ok (t ** prf)) => case isSort t of
+            (Ok t_sort) => Ok (t ** (prf, t_sort))
+            (Error msg not_sort) => Error ((show t) ++ " is not a sort.") ?check_sort_not_sort
+        (Error msg contra) => Error msg ?check_sort_no_type
+
+
     try_alpha_beta_conv : (n : Nat) -> Holds $ context |- (a, b) -> (b' : AExpr (ed, cd)) -> ResultDec $ Holds $ context |- (a, b')
     try_alpha_beta_conv {context} {b} n ab b' = case isAlphaEquivalent b b' of
         (Ok eq_types) => Ok $ AlphaHolds ab eq_types
         (Error msg not_alpha) => case isBetaEquivalent b b' of
-            (Ok bb') => case find_type_log (S n) context b' of
-                (Ok (AExprStar ** prf)) => Ok $ ConvHolds {isSort=SortStar} ab prf bb'
-                (Ok (AExprBox ** prf)) => Ok $ ConvHolds {isSort=SortBox} ab prf bb'
-                (Ok (bt' ** prf)) => Error ((show bt') ++ " is not a sort") ?opuipknqwperwe
+            (Ok bb') => case check_sort (S n) context b' of
+                (Ok (bt' ** (prf, prf_sort))) => Ok $ ConvHolds {isSort=prf_sort} ab prf bb'
                 (Error msg not_sort') => Error msg ?opiuwerme
             (Error msg_not_beta not_beta) => Error msg_not_beta ?ouiwerqwer
 
 
-
     use_weaken : (n : Nat) -> (Holds $ context |- (a, b)) -> ResultDec $ Holds $ (c :: context) |- (exprDepthS FZ a, exprDepthS FZ b)
-    use_weaken {context} {c} n a_b = case assert_total (type_check (S n) $ context |- (c, AExprStar), type_check (S n) $ context |- (c, AExprBox)) of
-        (Ok c_star, _box_tc) => Ok $ WeakHolds {isSort=SortStar} a_b c_star
-        (_star_tc, Ok c_box) => Ok $ WeakHolds {isSort=SortBox} a_b c_box
-        (Error msg1 c1, Error msg2 c2) => Error ?opuwerwereee ?oiuwer_3 -- Definitely a type check error
+    use_weaken {context} {c} n a_b =
+        case assert_total (check_sort (S n) context c) of
+            (Ok (ct ** (ct_prf, prf_sort))) => Ok $ WeakHolds {isSort=prf_sort} a_b ct_prf
+            (Error x f) => Error ?opuwerwereee ?oiuwer_3 -- Definitely a type check error
 
     use_weaken_find : (n : Nat) -> (b : AExpr (ed, cd) ** Holds $ context |- (a, b)) -> ResultDec (t : AExpr (ed, S cd) ** Holds $ (c :: context) |- (exprDepthS FZ a, t))
     use_weaken_find {c} {cd} {ed} {context} n (b ** prf) = case use_weaken (S n) {c=c} prf of
@@ -63,11 +68,11 @@ mutual
     find_type {cd = Z} {ed} n [] (AExprVariable (MkDeBruijnIdentifier deBruijn src)) = absurd deBruijn
     find_type {cd = S cd} {ed} n (ct :: cts) (AExprVariable (MkDeBruijnIdentifier deBruijn src)) =
         case deBruijn of
-            FZ => case assert_total (type_check (S n) (cts |- (ct, AExprStar)), type_check (S n) (cts |- (ct, AExprBox))) of
-                        (Ok prf, _) => Ok (exprDepthS FZ ct ** VarHolds {src=src} {isSort=SortStar} cts ct prf)
-                        (_, Ok prf) => Ok (exprDepthS FZ ct ** VarHolds {src=src} {isSort=SortBox} cts ct prf)
+            FZ => case assert_total (check_sort (S n) cts ct) of
+                        Ok (ct_t ** (ct_prf, ct_sort)) =>
+                            Ok (exprDepthS FZ ct ** VarHolds {src=src} {isSort=ct_sort} cts ct ct_prf)
                         -- This is definitely a type check error, since the given 'type' is not a type or kind
-                        (Error msg1 c1, Error msg2 c2) => ?asdfdfd_3
+                        Error msg1 c1 => ?asdfdfd_3
 
             FS x => -- We need to use weakening here
                 case assert_total (find_type_log (S n) cts (AExprVariable (MkDeBruijnIdentifier x src))) of
@@ -75,24 +80,19 @@ mutual
                     (Error msg contra) => ?var_rule_use_weaken_2 -- This is definitely a type check error
 
     find_type {cd} {ed} n context (AExprArrow (MkADecl a x_src) b) =
-        case assert_total (find_type_log (S n) context a, find_type_log (S n) (a :: context) b) of
-            (Ok (s1 ** s1_prf), Ok (s2 ** s2_prf)) => case (isSort s1, isSort s2) of
-                (Ok s1_sort, Ok SortStar) => Ok (AExprStar ** FormHolds {isSort1 = s1_sort} {isSort2 = SortStar} context a b s1_prf s2_prf)
-                (Ok s1_sort, Ok SortBox) => Ok (AExprBox ** FormHolds {isSort1 = s1_sort} {isSort2 = SortBox} context a b s1_prf s2_prf)
-
-                (Error msg1 s1_not_sort, _) => ?arrow_not_sort_bind -- Definitely a type error
-                (_, Error msg2 s2_not_sort) => ?arrow_not_sort_result -- Definitely a type error
-
+        case assert_total (check_sort (S n) context a, check_sort (S n) (a :: context) b) of
+            (Ok (s1 ** (s1_prf, sort1)), Ok (AExprStar ** (s2_prf, SortStar))) =>
+                Ok (AExprStar ** FormHolds {isSort1 = sort1} {isSort2 = SortStar} context a b s1_prf s2_prf)
+            (Ok (s1 ** (s1_prf, sort1)), Ok (AExprBox ** (s2_prf, SortBox))) =>
+                Ok (AExprBox ** FormHolds {isSort1 = sort1} {isSort2 = SortBox} context a b s1_prf s2_prf)
             (Error msg1 s1_contra, _) => ?arrow_invalid_bind_type -- Definitely a type error
             (_, Error msg2 s2_contra) => ?arrow_invalid_result_type -- Definitely a type error
 
-
     find_type {cd} {ed} n context (AExprLambda (MkADecl a src_a) m) =
         case assert_total (find_type_log (S n) (a :: context) m) of
-            (Ok (b ** m_b_prf)) => case assert_total (find_type_log (S n) context (AExprArrow (MkADecl a src_a) b)) of
-                (Ok (s ** s_prf)) => case isSort s of
-                    (Ok s_sort) => Ok (AExprArrow (MkADecl a src_a) b ** AbstHolds {isSort=s_sort} m_b_prf s_prf)
-                    (Error msg s_not_sort) => ?find_type_log_lambda_pi_not_sort -- Type error?
+            (Ok (b ** m_b_prf)) => case assert_total (check_sort (S n) context (AExprArrow (MkADecl a src_a) b)) of
+                (Ok (s ** (s_prf, s_sort))) =>
+                    Ok (AExprArrow (MkADecl a src_a) b ** AbstHolds {isSort=s_sort} m_b_prf s_prf)
                 (Error msg pi_contra) => ?find_type_log_lambda_pi_bad -- Type error?
             (Error msg b_contra) => ?find_type_log_lambda_body_bad -- Definitely a type error since body can't type check
 
@@ -106,9 +106,6 @@ mutual
 
     find_type n context AExprBox = Error "box is not a sort" ?no_box_prf
     find_type n context e = error ("find_type_log missing case: " ++ (show context) ++ " |- " ++ (show e)) --?find_type_log_other_cases
-
-    -- find_type_log {cd = cd} {ed = ed} context (AExprDefApp x xs) = ?find_type_log_rhs_5
-    -- find_type_log {cd = cd} {ed = ed} context AExprBox = ?find_type_log_rhs_7
 
 
     type_check : (n : Nat) -> (j : TypeJudgment) -> ResultDec (Holds j)
