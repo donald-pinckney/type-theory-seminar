@@ -1,0 +1,2 @@
+(Def d1 () (   \A:*. \a:A. \c:(A -> (beta : *) -> beta). c a   )
+            (   (A : *) -> A -> ((A -> (alpha : *) -> alpha) -> (gamma : *) -> gamma)    ))

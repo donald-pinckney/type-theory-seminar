@@ -36,7 +36,7 @@ mutual
         (Error msg not_alpha) => case isBetaEquivalent b b' of
             (Ok bb') => case check_sort (S n) context b' of
                 (Ok (bt' ** (prf, prf_sort))) => Ok $ ConvHolds {isSort=prf_sort} ab prf bb'
-                (Error msg not_sort') => Error msg ?opiuwerme
+                (Error msg not_sort') => Error "MSG1" ?opiuwerme
             (Error msg_not_beta not_beta) => Error msg_not_beta ?ouiwerqwer
 
 

@@ -113,4 +113,4 @@ isBetaEquivalent : (a : AExpr (ed, cd)) -> (b : AExpr (ed, cd)) -> ResultDec (Be
 isBetaEquivalent a b =
     case isAlphaEquivalent (eval a) (eval b) of
         (Ok prf) => Ok $ Normalized prf
-        (Error msg f) => Error msg ?oipuwerqwer
+        (Error msg f) => Error ("not beta equivalent:\n\t" ++ show a ++ "\n\t" ++ show b) ?oipuwerqwer
