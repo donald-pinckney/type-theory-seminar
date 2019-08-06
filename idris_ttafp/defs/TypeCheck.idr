@@ -20,11 +20,6 @@ import Debug.Trace
 
 %default total
 
-
-and_intro : (A : Type) -> (B : Type) -> A -> B -> (C : Type) -> (A -> B -> C) -> C
-and_intro = \A:Type => \B:Type => \a:A => \b:B => \C:Type => \abc:(A -> B -> C) => abc a b
-
-
 should_trace : Bool
 should_trace = False
 
@@ -120,7 +115,7 @@ mutual
                 let sub = substituteTop Z LTEZero b arg in
                 debug_trace ("(" ++ show b ++ ")[top := " ++ show arg ++ "] = " ++ show sub) $
                 Ok (sub ** ApplHolds {src=src} arrow_prf arg_prf)
-            (Error arg_msg arg_contra) => ?oiuwerwer_4
+            (Error arg_msg arg_contra) => Error ("Cannot apply function, mismatched types: " ++ arg_msg) ?oiuwerwer_4
         Ok (ft ** ft_prf) => ?pouwereee_4
         Error f_msg f_contra => ?pouwereee_2
 

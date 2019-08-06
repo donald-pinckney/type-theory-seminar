@@ -78,7 +78,7 @@ mutual
         (y', uniqueId) <- resolveExpr uniqueId envDefs contextVars y
         success (AExprApp x' y', uniqueId)
     resolveExpr uniqueId envDefs contextVars (CExprArrow (Left leftT) rightT) = do
-        let uniqueDeadId = MkIdentifier (unpackSource $ "__unique_" ++ show uniqueId)
+        let uniqueDeadId = MkIdentifier (unpackSource $ "__unique_" ++ show uniqueId) True
         let uniqueId = S uniqueId
         extendedContext <- addToContext envDefs contextVars uniqueDeadId
         (leftResolvedT, uniqueId) <- resolveExpr uniqueId envDefs contextVars leftT

@@ -116,7 +116,7 @@ Show (DeBruijnIdentifier len) where
 
 mutual
     Show (ADecl depth) where
-        show (MkADecl type sourceId) = (show sourceId) ++ " : " ++ (show type)
+        show (MkADecl type sourceId) = if isGenerated sourceId then show type else (show sourceId) ++ " : " ++ (show type)
 
     Show (AExpr depth) where
         show AExprPostulate = "?"

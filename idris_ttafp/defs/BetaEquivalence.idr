@@ -46,6 +46,38 @@ mutual
     exprDepthS_defArgs binderDepth (x :: xs) = (exprDepthS binderDepth x) :: (exprDepthS_defArgs binderDepth xs)
 
 
+-- predFin : Fin
+
+public export
+chooseNatOrder : (n : Nat) -> (m : Nat) -> Either (GT n m) (Either (n = m) (LT n m))
+chooseNatOrder Z Z = Right (Left Refl)
+chooseNatOrder Z (S k) = Right (Right (LTESucc LTEZero))
+chooseNatOrder (S k) Z = Left (LTESucc LTEZero)
+chooseNatOrder (S k) (S j) =
+    let ih = chooseNatOrder k j in
+    case ih of
+        (Left l) => Left $ LTESucc l
+        (Right (Left l)) => Right (Left (cong {f=S} l))
+        (Right (Right r)) => Right (Right (LTESucc r))
+
+
+public export
+gt_not_zero : GT n m -> Not (n = Z)
+gt_not_zero {n = (S right)} {m = m} (LTESucc x) = SIsNotZ
+
+
+public export
+strengthenFin : (x : Fin (S n)) -> LT (finToNat x) n -> Fin n
+strengthenFin {n = Z} x lt_n = absurd lt_n
+strengthenFin {n = (S k)} FZ lt_n = FZ
+strengthenFin {n = (S k)} (FS x) lt_n = FS (strengthenFin x (fromLteSucc lt_n))
+
+public export
+finPred : (x : Fin (S n)) -> Not (finToNat x = Z) -> Fin n
+finPred FZ not_z = void $ not_z Refl
+finPred (FS x) not_z = x
+
+
 mutual
     public export
     substituteTop : (idx : Nat) -> (LTE idx cd) -> (b : AExpr (ed, S cd)) -> (n : AExpr (ed, cd)) -> AExpr (ed, cd)
@@ -62,13 +94,35 @@ mutual
         let type' = substituteTop idx idx_lte t n in
         let body' = substituteTop (S idx) (LTESucc idx_lte) body (assert_smaller n (exprDepthS FZ n)) in
         AExprArrow (MkADecl type' src) body'
-    substituteTop {ed} {cd} Z idx_lte (AExprVariable (MkDeBruijnIdentifier FZ src)) n = n
-    substituteTop {ed} {cd = Z} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier FZ src)) n = absurd idx_lte
-    substituteTop {ed} {cd = S cd} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier FZ src)) n = AExprVariable (MkDeBruijnIdentifier FZ src)
-    substituteTop {ed} {cd} Z idx_lte (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n = AExprVariable (MkDeBruijnIdentifier x src)
-    substituteTop {ed} {cd = Z} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n = absurd idx_lte
-    substituteTop {ed} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n =
-        substituteTop k (lteSuccLeft idx_lte) (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n
+
+    substituteTop {cd} idx idx_lte (AExprVariable (MkDeBruijnIdentifier x src)) n =
+        case chooseNatOrder (finToNat x) idx of
+            (Right (Left x_eq_idx)) => n
+            (Left x_gt_idx) =>
+                let x_not_z = gt_not_zero x_gt_idx in
+                AExprVariable (MkDeBruijnIdentifier (finPred x x_not_z) src)
+            (Right (Right x_lt_idx)) =>
+                let x_lt_cd : Prelude.Nat.LT (finToNat x) cd = x_lt_idx `lteTransitive` idx_lte in
+                AExprVariable (MkDeBruijnIdentifier (strengthenFin x x_lt_cd) src)
+
+
+        -- if finToNat x > idx then -- idx < S cd,    finToNat x < S cd,   idx < finToNat x < S cd
+        --     ?iuwerwer
+        --     -- AExprVariable (MkDeBruijnIdentifier x-1 src)
+        -- else if finToNat x < idx then -- idx < S cd, finToNat x < S cd, finToNat x < idx < S cd
+        --     ?poiuwerqwer3
+        --     -- AExprVariable (MkDeBruijnIdentifier x src)
+        -- else
+        --     n
+
+    -- substituteTop {ed} {cd} Z idx_lte (AExprVariable (MkDeBruijnIdentifier FZ src)) n = n
+    -- substituteTop {ed} {cd = Z} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier FZ src)) n = absurd idx_lte
+    -- substituteTop {ed} {cd = S cd} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier FZ src)) n = AExprVariable (MkDeBruijnIdentifier FZ src)
+    -- substituteTop {ed} {cd} Z idx_lte (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n = AExprVariable (MkDeBruijnIdentifier (x) src)
+    -- substituteTop {ed} {cd = Z} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n = absurd idx_lte
+    -- substituteTop {ed} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n =
+    --     let tmp = substituteTop k (lteSuccLeft idx_lte) (AExprVariable (MkDeBruijnIdentifier (weaken x) src)) n in
+    --     tmp
 
     substituteTop idx idx_lte expr n = ?opiuwerwere
 
@@ -113,4 +167,4 @@ isBetaEquivalent : (a : AExpr (ed, cd)) -> (b : AExpr (ed, cd)) -> ResultDec (Be
 isBetaEquivalent a b =
     case isAlphaEquivalent (eval a) (eval b) of
         (Ok prf) => Ok $ Normalized prf
-        (Error msg f) => Error ("not beta equivalent:\n\t" ++ show a ++ "\n\t" ++ show b) ?oipuwerqwer
+        (Error msg f) => Error ("not beta equivalent:\n\t" ++ show a ++ "\nExpected:\n\t" ++ show b) ?oipuwerqwer

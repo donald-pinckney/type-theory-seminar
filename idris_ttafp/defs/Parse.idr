@@ -38,16 +38,16 @@ isStartOfTerm : Char -> Bool
 isStartOfTerm c = isVarCharStart c || c == '(' || c == '\\' || c == '*' || c == '[' || c == '?' || c == '{'
 
 parseIdentifier : SourceString -> SourceString -> ParseResultInternal Identifier
-parseIdentifier acc [] = success (MkIdentifier acc, [])
+parseIdentifier acc [] = success (MkIdentifier acc False, [])
 parseIdentifier acc vStr@((nx, cx) :: xs) =
     if isVarChar cx then
         parseIdentifier (acc ++ [(nx, cx)]) xs
     else if isWhitespace cx then
-        success (MkIdentifier acc, xs)
+        success (MkIdentifier acc False, xs)
     else if length acc == 0 then
         error "Expected variable to parse"
     else
-        success (MkIdentifier acc, vStr)
+        success (MkIdentifier acc False, vStr)
 
 
 
@@ -312,25 +312,25 @@ parse str = parse_unpacked (unpackSource str)
 ------------------ Tests -----------------
 
 x : Identifier
-x = MkIdentifier $ unpackSource "x"
+x = MkIdentifier (unpackSource "x") False
 
 a : Identifier
-a = MkIdentifier $ unpackSource "a"
+a = MkIdentifier (unpackSource "a") False
 
 b : Identifier
-b = MkIdentifier $ unpackSource "b"
+b = MkIdentifier (unpackSource "b") False
 
 c : Identifier
-c = MkIdentifier $ unpackSource "c"
+c = MkIdentifier (unpackSource "c") False
 
 t : Identifier
-t = MkIdentifier $ unpackSource "t"
+t = MkIdentifier (unpackSource "t") False
 
 T : Identifier
-T = MkIdentifier $ unpackSource "T"
+T = MkIdentifier (unpackSource "T") False
 
 U : Identifier
-U = MkIdentifier $ unpackSource "U"
+U = MkIdentifier (unpackSource "U") False
 
 x' : CExpr
 x' = CExprVariable x
