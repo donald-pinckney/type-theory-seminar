@@ -36,7 +36,7 @@ export
 implementation Show (Context ed cd) where
   show [] = ""
   show (t :: Nil) = assert_total (show t)
-  show (t :: ts) = assert_total (show t) ++ ", " ++ show ts
+  show (t :: ts) = show ts ++ "," ++ assert_total (show t)
 
 export
 implementation Show TypeJudgment where

@@ -21,12 +21,16 @@ import Debug.Trace
 %default total
 
 
+and_intro : (A : Type) -> (B : Type) -> A -> B -> (C : Type) -> (A -> B -> C) -> C
+and_intro = \A:Type => \B:Type => \a:A => \b:B => \C:Type => \abc:(A -> B -> C) => abc a b
+
+
 mutual
     check_sort : (n : Nat) -> (context : Context ed cd) -> (e : AExpr (ed, cd)) -> ResultDec (t : AExpr (ed, cd) ** (Holds $ context |- (e, t), IsSort t))
-    check_sort n context e = case find_type_log (S n) context e of
+    check_sort n context e = case find_type_log n context e of
         (Ok (t ** prf)) => case isSort t of
             (Ok t_sort) => Ok (t ** (prf, t_sort))
-            (Error msg not_sort) => Error ((show t) ++ " is not a sort.") ?check_sort_not_sort
+            (Error msg not_sort) => Error ((show e) ++ " is not a sort in context " ++ show context) ?check_sort_not_sort
         (Error msg contra) => Error msg ?check_sort_no_type
 
 
@@ -34,7 +38,7 @@ mutual
     try_alpha_beta_conv {context} {b} n ab b' = case isAlphaEquivalent b b' of
         (Ok eq_types) => Ok $ AlphaHolds ab eq_types
         (Error msg not_alpha) => case isBetaEquivalent b b' of
-            (Ok bb') => case check_sort (S n) context b' of
+            (Ok bb') => case check_sort n context b' of
                 (Ok (bt' ** (prf, prf_sort))) => Ok $ ConvHolds {isSort=prf_sort} ab prf bb'
                 (Error msg not_sort') => Error "MSG1" ?opiuwerme
             (Error msg_not_beta not_beta) => Error msg_not_beta ?ouiwerqwer
@@ -42,64 +46,73 @@ mutual
 
     use_weaken : (n : Nat) -> (Holds $ context |- (a, b)) -> ResultDec $ Holds $ (c :: context) |- (exprDepthS FZ a, exprDepthS FZ b)
     use_weaken {context} {c} n a_b =
-        case assert_total (check_sort (S n) context c) of
+        case assert_total (check_sort n context c) of
             (Ok (ct ** (ct_prf, prf_sort))) => Ok $ WeakHolds {isSort=prf_sort} a_b ct_prf
             (Error x f) => Error ?opuwerwereee ?oiuwer_3 -- Definitely a type check error
 
     use_weaken_find : (n : Nat) -> (b : AExpr (ed, cd) ** Holds $ context |- (a, b)) -> ResultDec (t : AExpr (ed, S cd) ** Holds $ (c :: context) |- (exprDepthS FZ a, t))
-    use_weaken_find {c} {cd} {ed} {context} n (b ** prf) = case use_weaken (S n) {c=c} prf of
+    use_weaken_find {c} {cd} {ed} {context} n (b ** prf) = case use_weaken n {c=c} prf of
         (Ok weak_prf) => Ok (exprDepthS FZ b ** weak_prf)
         (Error msg contra) => ?oiuwerwer_2 -- Definitely a type check error
 
 
     find_type_log : (n : Nat) -> (context : Context ed cd) -> (e : AExpr (ed, cd)) -> ResultDec (t : AExpr (ed, cd) ** Holds $ context |- (e, t))
     find_type_log n context e =
-        -- trace (concat (replicate n "  ") ++ "trying to find: " ++ (show context) ++ " |- " ++ (show e)) $
-        find_type n context e
+        trace (concat (replicate n "  ") ++ "trying to find: " ++ (show context) ++ " |- " ++ (show e)) $
+        case find_type (S n) context e of
+            (Ok (t ** prf)) => trace (concat (replicate n "  ") ++ "found: " ++ (show context) ++ " |- " ++ (show e) ++ "  :  " ++ show t) $
+                Ok (t ** prf)
+            (Error x f) => Error x f
 
 
 
     find_type : (n : Nat) -> (context : Context ed cd) -> (e : AExpr (ed, cd)) -> ResultDec (t : AExpr (ed, cd) ** Holds $ context |- (e, t))
     find_type {cd = Z} {ed} n [] AExprStar = Ok (AExprBox ** SortHolds)
-    find_type {cd = S cd} {ed} n (t :: ts) AExprStar = case assert_total (find_type_log (S n) ts AExprStar) of
-        (Ok t_prf) => use_weaken_find (S n) t_prf
+    find_type {cd = S cd} {ed} n (t :: ts) AExprStar = case assert_total (find_type_log n ts AExprStar) of
+        (Ok t_prf) => use_weaken_find n t_prf
         (Error msg contra) => ?opiuwerw_2 -- Definitely a type check error
 
     find_type {cd = Z} {ed} n [] (AExprVariable (MkDeBruijnIdentifier deBruijn src)) = absurd deBruijn
     find_type {cd = S cd} {ed} n (ct :: cts) (AExprVariable (MkDeBruijnIdentifier deBruijn src)) =
         case deBruijn of
-            FZ => case assert_total (check_sort (S n) cts ct) of
+            FZ => case assert_total (check_sort n cts ct) of
                         Ok (ct_t ** (ct_prf, ct_sort)) =>
                             Ok (exprDepthS FZ ct ** VarHolds {src=src} {isSort=ct_sort} cts ct ct_prf)
                         -- This is definitely a type check error, since the given 'type' is not a type or kind
                         Error msg1 c1 => ?asdfdfd_3
 
             FS x => -- We need to use weakening here
-                case assert_total (find_type_log (S n) cts (AExprVariable (MkDeBruijnIdentifier x src))) of
-                    (Ok t_prf) => use_weaken_find (S n) t_prf
+                case assert_total (find_type_log n cts (AExprVariable (MkDeBruijnIdentifier x src))) of
+                    (Ok t_prf) => use_weaken_find n t_prf
                     (Error msg contra) => ?var_rule_use_weaken_2 -- This is definitely a type check error
 
     find_type {cd} {ed} n context (AExprArrow (MkADecl a x_src) b) =
-        case assert_total (check_sort (S n) context a, check_sort (S n) (a :: context) b) of
+        case assert_total (check_sort n context a, check_sort n (a :: context) b) of
             (Ok (s1 ** (s1_prf, sort1)), Ok (AExprStar ** (s2_prf, SortStar))) =>
                 Ok (AExprStar ** FormHolds {isSort1 = sort1} {isSort2 = SortStar} context a b s1_prf s2_prf)
             (Ok (s1 ** (s1_prf, sort1)), Ok (AExprBox ** (s2_prf, SortBox))) =>
                 Ok (AExprBox ** FormHolds {isSort1 = sort1} {isSort2 = SortBox} context a b s1_prf s2_prf)
             (Error msg1 s1_contra, _) => ?arrow_invalid_bind_type -- Definitely a type error
-            (_, Error msg2 s2_contra) => ?arrow_invalid_result_type -- Definitely a type error
+            (_, Error msg2 s2_contra) =>
+                Error ("THE THING: " ++ show b ++ "\n\n" ++ "In context: " ++ show context ++ ", when checking arrow type: " ++ (show (AExprArrow (MkADecl a x_src) b)) ++ "\n\t" ++ msg2)
+                    ?arrow_invalid_result_type
 
     find_type {cd} {ed} n context (AExprLambda (MkADecl a src_a) m) =
-        case assert_total (find_type_log (S n) (a :: context) m) of
-            (Ok (b ** m_b_prf)) => case assert_total (check_sort (S n) context (AExprArrow (MkADecl a src_a) b)) of
-                (Ok (s ** (s_prf, s_sort))) =>
-                    Ok (AExprArrow (MkADecl a src_a) b ** AbstHolds {isSort=s_sort} m_b_prf s_prf)
-                (Error msg pi_contra) => ?find_type_log_lambda_pi_bad -- Type error?
-            (Error msg b_contra) => ?find_type_log_lambda_body_bad -- Definitely a type error since body can't type check
+        case assert_total (find_type_log n (a :: context) m) of
+            (Ok (b ** m_b_prf)) => trace ("GOT BACK BODY TYPE: " ++ show b) $
+                case assert_total (check_sort n context (AExprArrow (MkADecl a src_a) b)) of
+                    (Ok (s ** (s_prf, s_sort))) =>
+                        Ok (AExprArrow (MkADecl a src_a) b ** AbstHolds {isSort=s_sort} m_b_prf s_prf)
+                    (Error msg pi_contra) => Error msg ?find_type_log_lambda_pi_bad
+            (Error msg b_contra) => Error msg ?find_type_log_lambda_body_bad
 
 
-    find_type {cd} {ed} n context (AExprApp f arg) = case (find_type_log (S n) context f) of
+    find_type {cd} {ed} n context (AExprApp f arg) = case (find_type_log n context f) of
         Ok (AExprArrow (MkADecl a src) b ** arrow_prf) => case assert_total (type_check (S n) $ context |- (arg, a)) of
-            (Ok arg_prf) => Ok (substituteTop Z LTEZero b arg ** ApplHolds {src=src} arrow_prf arg_prf)
+            (Ok arg_prf) =>
+                let sub = substituteTop Z LTEZero b arg in
+                trace ("(" ++ show b ++ ")[top := " ++ show arg ++ "] = " ++ show sub) $
+                Ok (sub ** ApplHolds {src=src} arrow_prf arg_prf)
             (Error arg_msg arg_contra) => ?oiuwerwer_4
         Ok (ft ** ft_prf) => ?pouwereee_4
         Error f_msg f_contra => ?pouwereee_2
@@ -167,9 +180,9 @@ mutual
     --         (Error msg contra) => ?oiuwerwer_3 -- Definitely a type error
 
     type_check n j@(MkTypeJudgment {cd} {ed} context a t) =
-        -- trace (concat (replicate n "  ") ++ "trying to check: " ++ (show j)) $ -- Ok ?pouiwerqwer
-        case find_type_log (S n) context a of
-            (Ok (t' ** prf')) => try_alpha_beta_conv (S n) prf' t
+        trace (concat (replicate n "  ") ++ "trying to check: " ++ (show j)) $ -- Ok ?pouiwerqwer
+        case find_type_log n context a of
+            (Ok (t' ** prf')) => try_alpha_beta_conv n prf' t
             (Error msg contra) => Error msg ?no_type_prf
 
 

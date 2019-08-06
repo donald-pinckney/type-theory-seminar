@@ -68,7 +68,7 @@ mutual
     substituteTop {ed} {cd} Z idx_lte (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n = AExprVariable (MkDeBruijnIdentifier x src)
     substituteTop {ed} {cd = Z} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n = absurd idx_lte
     substituteTop {ed} (S k) idx_lte (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n =
-        substituteTop k (lteSuccLeft idx_lte) (AExprVariable (MkDeBruijnIdentifier (weaken x) src)) n
+        substituteTop k (lteSuccLeft idx_lte) (AExprVariable (MkDeBruijnIdentifier (FS x) src)) n
 
     substituteTop idx idx_lte expr n = ?opiuwerwere
 
