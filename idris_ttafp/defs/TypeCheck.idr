@@ -25,6 +25,13 @@ and_intro : (A : Type) -> (B : Type) -> A -> B -> (C : Type) -> (A -> B -> C) ->
 and_intro = \A:Type => \B:Type => \a:A => \b:B => \C:Type => \abc:(A -> B -> C) => abc a b
 
 
+should_trace : Bool
+should_trace = False
+
+debug_trace : String -> a -> a
+debug_trace str x = if should_trace then trace str x else x
+
+
 mutual
     check_sort : (n : Nat) -> (context : Context ed cd) -> (e : AExpr (ed, cd)) -> ResultDec (t : AExpr (ed, cd) ** (Holds $ context |- (e, t), IsSort t))
     check_sort n context e = case find_type_log n context e of
@@ -58,9 +65,9 @@ mutual
 
     find_type_log : (n : Nat) -> (context : Context ed cd) -> (e : AExpr (ed, cd)) -> ResultDec (t : AExpr (ed, cd) ** Holds $ context |- (e, t))
     find_type_log n context e =
-        trace (concat (replicate n "  ") ++ "trying to find: " ++ (show context) ++ " |- " ++ (show e)) $
+        debug_trace (concat (replicate n "  ") ++ "trying to find: " ++ (show context) ++ " |- " ++ (show e)) $
         case find_type (S n) context e of
-            (Ok (t ** prf)) => trace (concat (replicate n "  ") ++ "found: " ++ (show context) ++ " |- " ++ (show e) ++ "  :  " ++ show t) $
+            (Ok (t ** prf)) => debug_trace (concat (replicate n "  ") ++ "found: " ++ (show context) ++ " |- " ++ (show e) ++ "  :  " ++ show t) $
                 Ok (t ** prf)
             (Error x f) => Error x f
 
@@ -99,7 +106,7 @@ mutual
 
     find_type {cd} {ed} n context (AExprLambda (MkADecl a src_a) m) =
         case assert_total (find_type_log n (a :: context) m) of
-            (Ok (b ** m_b_prf)) => trace ("GOT BACK BODY TYPE: " ++ show b) $
+            (Ok (b ** m_b_prf)) => debug_trace ("GOT BACK BODY TYPE: " ++ show b) $
                 case assert_total (check_sort n context (AExprArrow (MkADecl a src_a) b)) of
                     (Ok (s ** (s_prf, s_sort))) =>
                         Ok (AExprArrow (MkADecl a src_a) b ** AbstHolds {isSort=s_sort} m_b_prf s_prf)
@@ -111,7 +118,7 @@ mutual
         Ok (AExprArrow (MkADecl a src) b ** arrow_prf) => case assert_total (type_check (S n) $ context |- (arg, a)) of
             (Ok arg_prf) =>
                 let sub = substituteTop Z LTEZero b arg in
-                trace ("(" ++ show b ++ ")[top := " ++ show arg ++ "] = " ++ show sub) $
+                debug_trace ("(" ++ show b ++ ")[top := " ++ show arg ++ "] = " ++ show sub) $
                 Ok (sub ** ApplHolds {src=src} arrow_prf arg_prf)
             (Error arg_msg arg_contra) => ?oiuwerwer_4
         Ok (ft ** ft_prf) => ?pouwereee_4
@@ -180,7 +187,7 @@ mutual
     --         (Error msg contra) => ?oiuwerwer_3 -- Definitely a type error
 
     type_check n j@(MkTypeJudgment {cd} {ed} context a t) =
-        trace (concat (replicate n "  ") ++ "trying to check: " ++ (show j)) $ -- Ok ?pouiwerqwer
+        debug_trace (concat (replicate n "  ") ++ "trying to check: " ++ (show j)) $ -- Ok ?pouiwerqwer
         case find_type_log n context a of
             (Ok (t' ** prf')) => try_alpha_beta_conv n prf' t
             (Error msg contra) => Error msg ?no_type_prf
