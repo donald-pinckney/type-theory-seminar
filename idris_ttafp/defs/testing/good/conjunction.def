@@ -3,3 +3,6 @@
 
 (Def and_left () (   \A:*, B:*, and:((C : *) -> (A -> B -> C) -> C).  and A (\a:A, b:B. a)   )
             (   (A : *) -> (B : *) -> ((C : *) -> (A -> B -> C) -> C) -> A ))
+
+(Def and_right () (   \A:*, B:*, and:((C : *) -> (A -> B -> C) -> C).  and B (\a:A, b:B. b)   )
+            (   (A : *) -> (B : *) -> ((C : *) -> (A -> B -> C) -> C) -> B ))

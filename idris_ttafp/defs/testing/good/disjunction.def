@@ -1,0 +1,9 @@
+(Def or_intro_left () (   \A:*, B:*, a:A, C:*, ac:(A -> C), bc:(B -> C).  ac a   )
+            (   (A : *) -> (B : *) -> A -> (C : *) -> (A -> C) -> (B -> C) -> C  ))
+
+(Def or_intro_right () (   \A:*, B:*, b:B, C:*, ac:(A -> C), bc:(B -> C).  bc b   )
+            (   (A : *) -> (B : *) -> B -> (C : *) -> (A -> C) -> (B -> C) -> C  ))
+
+
+(Def or_elim () (   \A:*, B:*, C:*, or:((D : *) -> (A -> D) -> (B -> D) -> D),  ac:(A -> C),  bc:(B -> C).  or C ac bc )
+            (   (A : *) -> (B : *) -> (C : *) ->   ((D : *) -> (A -> D) -> (B -> D) -> D)    -> (A -> C) -> (B -> C) -> C  ))
