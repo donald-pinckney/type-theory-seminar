@@ -1,0 +1,17 @@
+
+(Def exists_elim () (
+    \S:*, P:(S -> *), A:*, exists:((alpha : *) -> ((x : S) -> P x -> alpha) -> alpha), pa:((x : S) -> P x -> A).
+        exists A pa
+    )(
+        (S : *) -> (P : S -> *) -> (A : *) ->
+        ((alpha : *) -> ((x : S) -> P x -> alpha) -> alpha )  ->
+        ((x : S) -> P x -> A)  ->
+        A
+))
+
+(Def exists_intro () (
+    \S:*, P:(S -> *), a:S, p:P a, alpha:*, v:((x : S) -> P x -> alpha).
+        v a p
+    )(
+    (S : *) -> (P : S -> *) -> (a : S) -> P a -> (alpha : *) -> ((x : S) -> P x -> alpha) -> alpha
+))
